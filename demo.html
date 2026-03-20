@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble World - Live Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .demo-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 3rem;
+            text-align: center;
+            max-width: 600px;
+        }
+        .demo-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #007AFF, #5856D6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+        .demo-description {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        .demo-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #007AFF, #5856D6);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin: 0.5rem;
+        }
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,122,255,0.3);
+        }
+        .features {
+            text-align: left;
+            margin: 2rem 0;
+        }
+        .feature {
+            display: flex;
+            align-items: center;
+            margin: 1rem 0;
+        }
+        .feature-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #007AFF, #5856D6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        .screenshot {
+            width: 100%;
+            border-radius: 12px;
+            margin: 2rem 0;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1 class="demo-title">Bubble World</h1>
+        <p class="demo-description">
+            A revolutionary worldbuilding organization app that combines structured content management with visual bubble mapping. Experience the future of creative worldbuilding with an Apple-inspired interface.
+        </p>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">📝</div>
+                <div>
+                    <strong>Structured Content</strong><br>
+                    Notion-style tabs with rich text editing
+                </div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🫧</div>
+                <div>
+                    <strong>Visual Bubble Maps</strong><br>
+                    See how your world connects at a glance
+                </div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎨</div>
+                <div>
+                    <strong>Apple-Inspired Design</strong><br>
+                    Modern, intuitive, and beautiful
+                </div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔗</div>
+                <div>
+                    <strong>Smart Linking</strong><br>
+                    Connect topics and subsections seamlessly
+                </div>
+            </div>
+        </div>
+
+        <a href="index.html" class="demo-button">🚀 Launch Live Demo</a>
+        <a href="https://github.com/yourusername/bubble-world" class="demo-button">📖 View Source Code</a>
+        
+        <p style="margin-top: 2rem; color: #999; font-size: 0.9rem;">
+            Built with HTML, CSS, JavaScript, and D3.js<br>
+            No framework dependencies • Works in any modern browser
+        </p>
+    </div>
+</body>
+</html>
