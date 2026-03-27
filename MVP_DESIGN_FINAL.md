@@ -196,8 +196,16 @@ CREATE INDEX idx_sessions_session_id ON user_sessions(session_id);
 1. **Anonymous Session**: Generate unique session ID
 2. **5-Minute Timer**: Full app access with countdown
 3. **Exit Intent Detection**: Mouse leaving viewport triggers prompt
-4. **Conversion Prompt**: "Save your work? Sign up or continue locally"
-5. **Local Storage Fallback**: If no signup, save to localStorage
+4. **Conversion Prompt**: Small centered UI modal asking to sign up or continue locally
+5. **Local Storage Fallback**: If no signup, save all changes to browser cache
+
+### **Trial-to-Paid Migration**
+- **If user leaves before 5 minutes**: All edits are automatically saved to localStorage
+- **If user doesn't sign up**: Continue with local storage, all data preserved in browser
+- **Signup prompt UI**: Centered modal with options to "Create Account" or "Sign In" to save work
+
+### **Conflict Resolution**
+- **Same email signup**: Alert user that account exists, offer "Go to Login" or "Use Different Email"
 
 ### **Implementation Details**
 ```typescript
@@ -432,6 +440,10 @@ const SidebarTree: React.FC<{ pages: PageNode[] }> = ({ pages }) => {
 ## 💾 Data Persistence
 
 ### **Dual Storage Strategy**
+- **Trial users**: All data saved to localStorage automatically
+- **Signed-in users**: Data saved to Supabase cloud database
+- **Auto-save frequency**: Every 5 minutes for all users
+- **Sync status**: "Sync: Ready" means last save was successful
 ```typescript
 class DataManager {
   private isTrial: boolean;
@@ -641,9 +653,31 @@ bubble-world/
 
 ---
 
-## 📈 Success Metrics
+## � Business Logic
 
-### **MVP KPIs**
+### **World Management**
+- **World creation**: No minimum required information
+- **Empty world cleanup**: Worlds with no content are deleted when user leaves page
+- **User permissions**: No difference between account types - only determines cloud vs local storage
+- **Content rules**: To be defined later, no restrictions in MVP
+
+### **User Account Types**
+- **Trial users**: Full functionality, data saved locally
+- **Account users**: Full functionality, data saved to cloud
+- **No paid tier**: All features available to all users
+
+---
+
+## 🎯 UI/UX Interactions
+
+### **Editor Shortcuts**
+- **Undo**: Ctrl+Z
+- **Redo**: Ctrl+Shift+Z
+- **Standard text editing shortcuts**: Ctrl+C, Ctrl+V, Ctrl+X, etc.
+
+---
+
+## 📈 Success Metrics
 - **Trial Conversion Rate**: % of trial users who sign up
 - **Time to First World**: Average time to create first world
 - **Page Creation Rate**: Average pages created per user
@@ -653,7 +687,7 @@ bubble-world/
 ### **Technical Metrics**
 - **Page Load Time**: < 2 seconds initial load
 - **Search Response**: < 500ms for search queries
-- **Auto-save Frequency**: Every 30 seconds or on change
+- **Auto-save Frequency**: Every 5 minutes
 - **Memory Usage**: < 100MB for typical world
 
 ---
