@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Architect - Login</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-background": "#191c1d",
+                        "outline-variant": "#c5c6cd",
+                        "surface-container": "#edeeef",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#d1e1fa",
+                        "on-secondary-container": "#556479",
+                        "primary-fixed-dim": "#abcae8",
+                        "tertiary-fixed": "#f9dfb8",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#43617c",
+                        "tertiary-fixed-dim": "#dcc39d",
+                        "surface-variant": "#e1e3e4",
+                        "surface-container-high": "#e7e8e9",
+                        "tertiary": "#4b3b1f",
+                        "on-secondary-fixed-variant": "#39485c",
+                        "secondary-fixed": "#d4e4fc",
+                        "tertiary-container": "#645234",
+                        "primary": "#214059",
+                        "surface-container-low": "#f3f4f5",
+                        "background": "#f8f9fa",
+                        "on-tertiary-fixed-variant": "#554427",
+                        "on-primary-container": "#aecdeb",
+                        "secondary": "#515f74",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#d9dadb",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#2b4963",
+                        "surface": "#f8f9fa",
+                        "surface-bright": "#f8f9fa",
+                        "on-tertiary-fixed": "#261902",
+                        "surface-container-highest": "#e1e3e4",
+                        "outline": "#75777d",
+                        "secondary-fixed-dim": "#b8c8e0",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "primary-fixed": "#cce5ff",
+                        "on-surface": "#191c1d",
+                        "error": "#ba1a1a",
+                        "on-surface-variant": "#44474c",
+                        "on-tertiary-container": "#dfc6a0",
+                        "on-primary-fixed": "#001d31",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#abcae8",
+                        "primary-container": "#395771",
+                        "inverse-surface": "#2e3132",
+                        "inverse-on-surface": "#f0f1f2"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-background min-h-screen flex items-center justify-center relative overflow-hidden">
+<!-- Background Layer -->
+<div class="absolute inset-0 z-0">
+<div class="absolute inset-0 bg-gradient-to-br from-secondary-container/30 via-background to-primary-container/10"></div>
+<img alt="" class="w-full h-full object-cover opacity-20 scale-110" data-alt="Dreamy out-of-focus architectural sketch on drafting paper with soft morning light and ethereal blue and cream tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSeyG2RdRxpe55b7qKQ-PnIELwR5JwBu6BV3yZK8hwZZcXfyKbxVk0oEFknvVBW0CyS8c_trFY6u5W7rw5q6fW-KijC-6mctBsteGqaWj4pBv_LaIrTZUBnHTTxSCfKI-VBJoZZ-IqJCiXsOm-OeB8pqpYGNQb387VJqGNLz1HsfCkzXHvb3U-TSdd3VIbhGWt9_RlP-qBKG5f8LF1TABfbfvt-rXc85pACP2J3LUNbCsJHw3_dLhPGTwhmlbwkMQG8JfFsWEL8uE"/>
+</div>
+<!-- Main Content Canvas -->
+<main class="relative z-10 w-full max-w-[480px] px-6 py-12">
+<!-- Brand Header (Floating above the card) -->
+<div class="text-center mb-10">
+<h1 class="font-headline text-primary text-3xl font-extrabold tracking-tighter mb-2">The Architect</h1>
+<p class="text-on-surface-variant text-sm font-medium tracking-wide">DESIGN YOUR UNIVERSE</p>
+</div>
+<!-- Auth Card -->
+<div class="glass-panel rounded-xl shadow-[0_12px_40px_rgba(25,28,29,0.06)] p-10 flex flex-col gap-8 border border-white/20">
+<div class="space-y-2">
+<h2 class="font-headline text-2xl text-primary">Welcome back</h2>
+<p class="text-on-surface-variant text-sm">Please enter your credentials to access your worlds.</p>
+</div>
+<!-- Login Form -->
+<form class="space-y-6">
+<!-- Email Field -->
+<div class="space-y-2">
+<label class="text-xs font-semibold uppercase tracking-widest text-on-surface-variant ml-1" for="email">Email Address</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-on-surface-variant pointer-events-none" data-icon="mail">mail</span>
+<input class="w-full bg-surface-container-highest/50 border-none rounded-md py-4 pl-12 pr-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline-variant font-medium text-sm" id="email" placeholder="da-vinci@architect.com" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<div class="flex justify-between items-center ml-1">
+<label class="text-xs font-semibold uppercase tracking-widest text-on-surface-variant" for="password">Password</label>
+<a class="text-xs font-medium text-primary hover:underline" href="#">Forgot?</a>
+</div>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-on-surface-variant pointer-events-none" data-icon="lock">lock</span>
+<input class="w-full bg-surface-container-highest/50 border-none rounded-md py-4 pl-12 pr-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline-variant font-medium text-sm" id="password" placeholder="••••••••••••" type="password"/>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="pt-2 space-y-4">
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-semibold py-4 rounded-full shadow-lg active:scale-95 transition-all duration-200" type="submit">
+                        Sign In
+                    </button>
+<div class="relative py-2">
+<div class="absolute inset-0 flex items-center">
+<span class="w-full border-t border-outline-variant/30"></span>
+</div>
+<div class="relative flex justify-center text-xs uppercase tracking-tighter">
+<span class="bg-transparent px-2 text-on-surface-variant font-medium">New to the craft?</span>
+</div>
+</div>
+<button class="w-full bg-surface-container-low hover:bg-surface-container-high text-primary font-semibold py-4 rounded-full transition-colors active:scale-95 duration-200" type="button">
+                        Create an account
+                    </button>
+</div>
+</form>
+<!-- Social/Alternative Links -->
+<div class="flex justify-center gap-6">
+<button aria-label="Sign in with Apple" class="p-3 rounded-full bg-white/50 hover:bg-white transition-colors border border-outline-variant/10 shadow-sm">
+<img alt="" class="w-5 h-5 opacity-80" data-alt="Black Apple logo icon minimalist design" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAB5mUZBSKnP0bE_WXkmI3iPu7WLcjsDR5EXMRzRcynSv7qkAmWTOhBXi5xP2gv8k0wEXXw1qLflVBCskrwnJyYyqQR674O21PQ9cSORMJZ2AUpVALRw3DLlz1PWEFLrsA_tkg7a2sVTVMZ1EBEGmy6ttInpBxc_SWvJ1VABhqGwCbiTX4Y6ywgwSkYNGTTdsYTT5wcxb4h__0nZ_zjeHxDWnatyoK87ett3-qbCVwHgSn1VMUAAhTnNGv4rntOm9s251cSQMeSiHc"/>
+</button>
+<button aria-label="Sign in with Google" class="p-3 rounded-full bg-white/50 hover:bg-white transition-colors border border-outline-variant/10 shadow-sm">
+<img alt="" class="w-5 h-5 opacity-80" data-alt="Multicolor Google G logo icon minimalist design" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDf5LtMTsZvMOalALoU2VvX_9HyZ0XSNJs0n3bRzZ5fQBSOhtKrpt9Rh-l0jmiK9bZOm3715eWExMFdGuaFhEkEWLcUXjFsofkLSs3cJJEFdKSL7kD4wpfHGsPziXoovhZ_0Czj7bMdDrog4vOW7Ac3pWW8osOYcnfc7I2c7eUEa4HeCvsaHJSO384sKvdpM3yjgL7YMhlYzxXA0TZTV2lq4zKW7Hjq1Qzl3OHeTkG57C0CFHcsHmECHQFePtYQuopQuhTQq9I0SPk"/>
+</button>
+</div>
+</div>
+<!-- Footer Footer (Hidden on small screens) -->
+<footer class="mt-8 flex justify-center gap-6 text-[10px] text-on-surface-variant uppercase tracking-widest font-semibold">
+<a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-primary transition-colors" href="#">Help</a>
+</footer>
+</main>
+<!-- Semantic Shell Suppression Logic: No NavBar/SideNav as this is a transactional Login Page -->
+</body></html>
