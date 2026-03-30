@@ -2,6 +2,10 @@
 
 A worldbuilding organization application that combines structured content management with visual bubble mapping.
 
+## Potential Future Ideas
+- **Separation of User Database Storage**: Every user's sign-in should not be linked together
+- **Connection of Worlds**: Different worlds can be connected together, like how ideas within them are connected
+
 ## 🎯 Features
 
 ### Core MVP Features
