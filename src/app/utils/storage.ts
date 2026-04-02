@@ -1,24 +1,29 @@
-import { World, Page, Subsection } from '../types';
+import { Universe, Page, Subsection } from '../types';
 
 const STORAGE_KEY = 'architect_worlds';
 
-export const getWorlds = (): World[] => {
-  const data = localStorage.getItem(STORAGE_KEY);
-  return data ? JSON.parse(data) : [];
+export const getWorlds = (): Universe[] => {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error('Failed to parse worlds from localStorage:', error);
+    return [];
+  }
 };
 
-export const saveWorlds = (worlds: World[]): void => {
+export const saveWorlds = (worlds: Universe[]): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(worlds));
 };
 
-export const getWorld = (worldId: string): World | undefined => {
+export const getWorld = (worldId: string): Universe | undefined => {
   const worlds = getWorlds();
   return worlds.find(w => w.id === worldId);
 };
 
-export const createWorld = (name: string, description: string): World => {
+export const createWorld = (name: string, description: string): Universe => {
   const worlds = getWorlds();
-  const newWorld: World = {
+  const newWorld: Universe = {
     id: Date.now().toString(),
     name,
     description,
@@ -29,7 +34,7 @@ export const createWorld = (name: string, description: string): World => {
   return newWorld;
 };
 
-export const updateWorld = (worldId: string, updates: Partial<World>): void => {
+export const updateWorld = (worldId: string, updates: Partial<Universe>): void => {
   const worlds = getWorlds();
   const index = worlds.findIndex(w => w.id === worldId);
   if (index !== -1) {
@@ -40,16 +45,16 @@ export const updateWorld = (worldId: string, updates: Partial<World>): void => {
 
 export const deletePage = (worldId: string, pageId: string): void => {
   const worlds = getWorlds();
-  const world = worlds.find(w => w.id === worldId);
+  const world = worlds.find((w: Universe) => w.id === worldId);
   if (world) {
-    world.pages = world.pages.filter(p => p.id !== pageId);
+    world.pages = world.pages.filter((p: Page) => p.id !== pageId);
     saveWorlds(worlds);
   }
 };
 
 export const createPage = (worldId: string, title: string, description: string): Page => {
   const worlds = getWorlds();
-  const world = worlds.find(w => w.id === worldId);
+  const world = worlds.find((w: Universe) => w.id === worldId);
   
   if (!world) throw new Error('World not found');
   
@@ -68,10 +73,10 @@ export const createPage = (worldId: string, title: string, description: string):
 
 export const updatePage = (worldId: string, pageId: string, updates: Partial<Page>): void => {
   const worlds = getWorlds();
-  const world = worlds.find(w => w.id === worldId);
+  const world = worlds.find((w: Universe) => w.id === worldId);
   
   if (world) {
-    const pageIndex = world.pages.findIndex(p => p.id === pageId);
+    const pageIndex = world.pages.findIndex((p: Page) => p.id === pageId);
     if (pageIndex !== -1) {
       world.pages[pageIndex] = { ...world.pages[pageIndex], ...updates };
       saveWorlds(worlds);
@@ -81,11 +86,11 @@ export const updatePage = (worldId: string, pageId: string, updates: Partial<Pag
 
 export const createSubsection = (worldId: string, pageId: string, title: string, content: string): Subsection => {
   const worlds = getWorlds();
-  const world = worlds.find(w => w.id === worldId);
+  const world = worlds.find((w: Universe) => w.id === worldId);
   
   if (!world) throw new Error('World not found');
   
-  const page = world.pages.find(p => p.id === pageId);
+  const page = world.pages.find((p: Page) => p.id === pageId);
   if (!page) throw new Error('Page not found');
   
   const newSubsection: Subsection = {
@@ -102,12 +107,12 @@ export const createSubsection = (worldId: string, pageId: string, title: string,
 
 export const updateSubsection = (worldId: string, pageId: string, subsectionId: string, updates: Partial<Subsection>): void => {
   const worlds = getWorlds();
-  const world = worlds.find(w => w.id === worldId);
+  const world = worlds.find((w: Universe) => w.id === worldId);
   
   if (world) {
-    const page = world.pages.find(p => p.id === pageId);
+    const page = world.pages.find((p: Page) => p.id === pageId);
     if (page) {
-      const subsectionIndex = page.subsections.findIndex(s => s.id === subsectionId);
+      const subsectionIndex = page.subsections.findIndex((s: Subsection) => s.id === subsectionId);
       if (subsectionIndex !== -1) {
         page.subsections[subsectionIndex] = { ...page.subsections[subsectionIndex], ...updates };
         saveWorlds(worlds);
@@ -118,12 +123,12 @@ export const updateSubsection = (worldId: string, pageId: string, subsectionId: 
 
 export const deleteSubsection = (worldId: string, pageId: string, subsectionId: string): void => {
   const worlds = getWorlds();
-  const world = worlds.find(w => w.id === worldId);
+  const world = worlds.find((w: Universe) => w.id === worldId);
   
   if (world) {
-    const page = world.pages.find(p => p.id === pageId);
+    const page = world.pages.find((p: Page) => p.id === pageId);
     if (page) {
-      page.subsections = page.subsections.filter(s => s.id !== subsectionId);
+      page.subsections = page.subsections.filter((s: Subsection) => s.id !== subsectionId);
       saveWorlds(worlds);
     }
   }
@@ -131,10 +136,10 @@ export const deleteSubsection = (worldId: string, pageId: string, subsectionId: 
 
 export const togglePageConnection = (worldId: string, fromPageId: string, toPageId: string): void => {
   const worlds = getWorlds();
-  const world = worlds.find(w => w.id === worldId);
+  const world = worlds.find((w: Universe) => w.id === worldId);
   
   if (world) {
-    const fromPage = world.pages.find(p => p.id === fromPageId);
+    const fromPage = world.pages.find((p: Page) => p.id === fromPageId);
     if (fromPage) {
       const connectionIndex = fromPage.connections.indexOf(toPageId);
       if (connectionIndex === -1) {
@@ -149,12 +154,12 @@ export const togglePageConnection = (worldId: string, fromPageId: string, toPage
 
 export const toggleSubsectionConnection = (worldId: string, pageId: string, fromSubsectionId: string, toSubsectionId: string): void => {
   const worlds = getWorlds();
-  const world = worlds.find(w => w.id === worldId);
+  const world = worlds.find((w: Universe) => w.id === worldId);
   
   if (world) {
-    const page = world.pages.find(p => p.id === pageId);
+    const page = world.pages.find((p: Page) => p.id === pageId);
     if (page) {
-      const fromSubsection = page.subsections.find(s => s.id === fromSubsectionId);
+      const fromSubsection = page.subsections.find((s: Subsection) => s.id === fromSubsectionId);
       if (fromSubsection) {
         const connectionIndex = fromSubsection.connections.indexOf(toSubsectionId);
         if (connectionIndex === -1) {

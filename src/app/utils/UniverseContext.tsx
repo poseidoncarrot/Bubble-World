@@ -32,23 +32,7 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
   const [universes, setUniverses] = useState<Universe[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (session) {
-      fetchUniverses();
-    } else {
-      setUniverses([]);
-      setLoading(false);
-    }
-  }, [session]);
-
-  useEffect(() => {
-    return () => {
-      // Cleanup function to prevent state updates on unmounted component
-      setLoading(false);
-    };
-  }, []);
-
-  const fetchUniverses = async () => {
+  const fetchUniverses = useCallback(async () => {
     if (!user) {
       setUniverses([]);
       setLoading(false);
@@ -57,32 +41,70 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
 
     try {
       setLoading(true);
-      const universesData = await db.getUniverses(user.id);
+      console.log('Fetching universes for user:', user.id);
       
-      // Load pages for each universe
+      // Check if database functions are available
+      if (!db.getUniverses || !db.getPages) {
+        throw new Error('Database functions not available');
+      }
+      
+      const universesData = await db.getUniverses(user.id);
+      console.log('Universes data:', universesData);
+      
+      // Load pages for each universe in parallel
       const universesWithPages = await Promise.all(
         universesData.map(async (universe) => {
-          const pages = await db.getPages(universe.id);
-          return { ...universe, pages };
+          try {
+            const pages = await db.getPages(universe.id);
+            return { ...universe, pages };
+          } catch (pageError) {
+            console.error(`Failed to load pages for universe ${universe.id}:`, pageError);
+            return { ...universe, pages: [] };
+          }
         })
       );
       
+      console.log('Universes with pages:', universesWithPages);
       setUniverses(universesWithPages);
     } catch (error) {
       console.error('Failed to fetch universes:', error);
       // Fallback to local storage if database fails
-      const localData = localStorage.getItem('the-architect-universes');
-      if (localData) {
-        try {
+      try {
+        const localData = localStorage.getItem('the-architect-universes');
+        if (localData) {
+          console.log('Using fallback local data');
           setUniverses(JSON.parse(localData));
-        } catch (err) {
-          console.error("Failed to parse local universes", err);
+        } else {
+          console.log('No local data found, setting empty array');
+          setUniverses([]);
         }
+      } catch (err) {
+        console.error("Failed to parse local universes", err);
+        setUniverses([]);
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (session) {
+      fetchUniverses().catch(error => {
+        console.error('Error in fetchUniverses:', error);
+        setLoading(false);
+      });
+    } else {
+      setUniverses([]);
+      setLoading(false);
+    }
+  }, [session, fetchUniverses]);
+
+  useEffect(() => {
+    return () => {
+      // Cleanup function to prevent state updates on unmounted component
+      setLoading(false);
+    };
+  }, []);
 
   const saveUniverses = useCallback(async (newUniverses: Universe[]) => {
     setUniverses(newUniverses);

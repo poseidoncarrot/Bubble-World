@@ -245,7 +245,8 @@ export default function WorldsList() {
                   type="text"
                   value={newUniverseName}
                   onChange={(e) => setNewUniverseName(e.target.value)}
-                  placeholder="e.g. The Forgotten Realms"
+                  placeholder="e.g. The Forgotten Realms (Max 30 chars)"
+                  maxLength={30}
                   className="w-full bg-[#f8f9fa] border border-[rgba(33,64,89,0.1)] rounded-2xl px-4 py-3 text-[#214059] focus:outline-none focus:ring-2 focus:ring-[#214059]/20 transition-all"
                   autoFocus
                 />
@@ -257,8 +258,10 @@ export default function WorldsList() {
                 <textarea
                   value={newUniverseDescription}
                   onChange={(e) => setNewUniverseDescription(e.target.value)}
-                  placeholder="A brief description of your universe..."
+                  placeholder="35 chars per row, 2 rows max"
+                  maxLength={70}
                   className="w-full bg-[#f8f9fa] border border-[rgba(33,64,89,0.1)] rounded-2xl px-4 py-3 text-[#214059] focus:outline-none focus:ring-2 focus:ring-[#214059]/20 transition-all resize-none h-24"
+                  rows={2}
                 />
               </div>
             </div>

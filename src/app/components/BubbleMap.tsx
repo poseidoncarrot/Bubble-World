@@ -19,7 +19,53 @@ export default function BubbleMap() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set([]));
   
+  // Local state for universe settings to prevent fast typing bugs
+  const [localUniverseName, setLocalUniverseName] = useState('');
+  const [localUniverseDescription, setLocalUniverseDescription] = useState('');
+  
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
+  // Separate debounced update functions to prevent field interference
+  const debouncedUpdateUniverseName = useMemo(
+    () => {
+      let timeoutId: NodeJS.Timeout;
+      return (universeId: string, name: string) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          updateUniverse(universeId, { name });
+        }, 500);
+      };
+    },
+    [updateUniverse]
+  );
+  
+  const debouncedUpdateUniverseDescription = useMemo(
+    () => {
+      let timeoutId: NodeJS.Timeout;
+      return (universeId: string, description: string) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          updateUniverse(universeId, { description });
+        }, 500);
+      };
+    },
+    [updateUniverse]
+  );
+  
+  // Cleanup timeout on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      // Cleanup will be handled by the debounced functions' internal clearTimeout
+    };
+  }, []);
+  
+  // Sync local state with universe data when universe changes
+  useEffect(() => {
+    if (universe) {
+      setLocalUniverseName(universe.name);
+      setLocalUniverseDescription(universe.description);
+    }
+  }, [universe]);
 
   const [connectingFrom, setConnectingFrom] = useState<{ type: 'page' | 'subsection', id: string } | null>(null);
 
@@ -194,7 +240,7 @@ export default function BubbleMap() {
               <div className={`font-bold text-[14px] truncate ${universe.settings?.theme === 'Dark' ? 'text-white' : 'text-[#164e63]'}`}>
                 {universe.name}
               </div>
-              <div className={`text-[10px] opacity-70 uppercase tracking-[0.5px] truncate mt-0.5 ${universe.settings?.theme === 'Dark' ? 'text-gray-400' : 'text-[#44474c]'}`}>
+              <div className={`text-[10px] opacity-70 uppercase tracking-[0.5px] line-clamp-2 mt-0.5 ${universe.settings?.theme === 'Dark' ? 'text-gray-400' : 'text-[#44474c]'}`}>
                 {universe.description || 'Universe Setting'}
               </div>
             </div>
@@ -415,17 +461,34 @@ export default function BubbleMap() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Universe Name</label>
                 <input 
                   type="text" 
-                  value={universe.name}
-                  onChange={(e) => updateUniverse(universe.id, { name: e.target.value })}
+                  value={localUniverseName}
+                  maxLength={30}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setLocalUniverseName(value);
+                    if (universe?.id) {
+                      debouncedUpdateUniverseName(universe.id, value);
+                    }
+                  }}
                   className="w-full border rounded-lg px-3 py-2 bg-gray-50 outline-none text-black" 
+                  placeholder="Max 30 characters"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Universe Description</label>
                 <textarea 
-                  value={universe.description}
-                  onChange={(e) => updateUniverse(universe.id, { description: e.target.value })}
+                  value={localUniverseDescription}
+                  maxLength={70}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setLocalUniverseDescription(value);
+                    if (universe?.id) {
+                      debouncedUpdateUniverseDescription(universe.id, value);
+                    }
+                  }}
                   className="w-full border rounded-lg px-3 py-2 bg-gray-50 outline-none resize-none h-24 text-black" 
+                  placeholder="35 chars per row, 2 rows max"
+                  rows={2}
                 />
               </div>
               <div>

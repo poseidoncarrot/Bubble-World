@@ -1,4 +1,4 @@
-import { World } from '../types';
+import { Universe } from '../types';
 import { saveWorlds } from './storage';
 
 export const initializeSeedData = () => {
@@ -6,7 +6,7 @@ export const initializeSeedData = () => {
   
   // Only seed if no data exists
   if (!existingWorlds) {
-    const seedWorld: World = {
+    const seedWorld: Universe = {
       id: '1',
       name: 'Aethelgard',
       description: 'High Fantasy Setting',
