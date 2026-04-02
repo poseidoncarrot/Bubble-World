@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { getServerUrl, supabase } from './supabase';
 import { Universe, Page, Subsection } from '../types';
+import * as db from './database';
 
 type UniverseContextType = {
   universes: Universe[];
@@ -40,9 +41,36 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
     }
   }, [session]);
 
+  useEffect(() => {
+    return () => {
+      // Cleanup function to prevent state updates on unmounted component
+      setLoading(false);
+    };
+  }, []);
+
   const fetchUniverses = async () => {
+    if (!user) {
+      setUniverses([]);
+      setLoading(false);
+      return;
+    }
+
     try {
-      // First try to load from local storage to prevent blank screen if fetch fails
+      setLoading(true);
+      const universesData = await db.getUniverses(user.id);
+      
+      // Load pages for each universe
+      const universesWithPages = await Promise.all(
+        universesData.map(async (universe) => {
+          const pages = await db.getPages(universe.id);
+          return { ...universe, pages };
+        })
+      );
+      
+      setUniverses(universesWithPages);
+    } catch (error) {
+      console.error('Failed to fetch universes:', error);
+      // Fallback to local storage if database fails
       const localData = localStorage.getItem('the-architect-universes');
       if (localData) {
         try {
@@ -51,57 +79,25 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
           console.error("Failed to parse local universes", err);
         }
       }
-
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      if (!currentSession?.access_token) {
-        setLoading(false);
-        return;
-      }
-      const res = await fetch(`${getServerUrl()}/universes`, {
-        headers: { Authorization: `Bearer ${currentSession.access_token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const serverUniverses = data.data || [];
-        setUniverses(serverUniverses);
-        localStorage.setItem('the-architect-universes', JSON.stringify(serverUniverses));
-      } else {
-        const text = await res.text();
-        if (res.status !== 401) console.error('Failed to fetch universes remotely', text);
-      }
-    } catch (e) {
-      console.warn('Network error when fetching universes remotely', e);
-      // If there's a TypeError (e.g. Failed to fetch), we just rely on the local storage loaded above
     } finally {
       setLoading(false);
     }
   };
 
-  const saveUniverses = async (newUniverses: Universe[]) => {
+  const saveUniverses = useCallback(async (newUniverses: Universe[]) => {
     setUniverses(newUniverses);
-    localStorage.setItem('the-architect-universes', JSON.stringify(newUniverses));
-    
-    const { data: { session: currentSession } } = await supabase.auth.getSession();
-    if (!currentSession?.access_token) return;
+    // Only save to localStorage if there are actual changes
     try {
-      const res = await fetch(`${getServerUrl()}/universes`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${currentSession.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ universes: newUniverses })
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        if (res.status !== 401) {
-          console.error('Failed to save universes remotely', text);
-        }
+      const currentData = localStorage.getItem('the-architect-universes');
+      const newData = JSON.stringify(newUniverses);
+      if (currentData !== newData) {
+        localStorage.setItem('the-architect-universes', newData);
       }
-    } catch (e) {
-      console.warn('Network error when saving universes remotely', e);
+    } catch (error) {
+      console.warn('Failed to save to localStorage:', error);
     }
-  };
+    // Database operations are handled individually in the CRUD functions
+  }, []);
 
   const uploadImage = async (file: File): Promise<string> => {
     if (!user) throw new Error('Not authenticated');
@@ -196,34 +192,52 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
   };
 
   const createUniverse = async (name: string, description: string, iconUrl?: string) => {
-    const newUniverse: Universe = {
-      id: crypto.randomUUID(),
-      name,
-      description,
-      icon: iconUrl,
-      pages: [],
-      categories: [], // default to empty
-      settings: {
-        theme: 'Light (Default)',
-        font: 'Sans Serif (Modern)',
-        color: '#214059'
-      }
-    };
-    const newUniverses = [...universes, newUniverse];
-    await saveUniverses(newUniverses);
-    return newUniverse;
+    if (!user) throw new Error('Not authenticated');
+    
+    try {
+      const newUniverse = await db.createUniverse({
+        user_id: user.id,
+        name,
+        description,
+        icon: iconUrl,
+        pages: [],
+        categories: [],
+        settings: {
+          theme: 'Light (Default)',
+          font: 'Sans Serif (Modern)',
+          color: '#214059'
+        }
+      });
+      
+      const newUniverses = [...universes, newUniverse];
+      await saveUniverses(newUniverses);
+      return newUniverse;
+    } catch (error) {
+      console.error('Failed to create universe:', error);
+      throw error;
+    }
   };
 
   const updateUniverse = async (universeId: string, updates: Partial<Universe>) => {
-    const newUniverses = universes.map(u => u.id === universeId ? { ...u, ...updates } : u);
-    setUniverses(newUniverses); // Update locally immediately
-    await saveUniverses(newUniverses);
+    try {
+      await db.updateUniverse(universeId, updates);
+      const newUniverses = universes.map(u => u.id === universeId ? { ...u, ...updates } : u);
+      await saveUniverses(newUniverses);
+    } catch (error) {
+      console.error('Failed to update universe:', error);
+      throw error;
+    }
   };
 
   const deleteUniverse = async (universeId: string) => {
-    const newUniverses = universes.filter(u => u.id !== universeId);
-    setUniverses(newUniverses); // Update locally immediately
-    await saveUniverses(newUniverses);
+    try {
+      await db.deleteUniverse(universeId);
+      const newUniverses = universes.filter(u => u.id !== universeId);
+      await saveUniverses(newUniverses);
+    } catch (error) {
+      console.error('Failed to delete universe:', error);
+      throw error;
+    }
   };
 
   const addCategory = async (universeId: string, category: string) => {
@@ -276,22 +290,28 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
   };
 
   const createPage = async (universeId: string, title: string, description: string, category: string = '') => {
-    const newPage: Page = {
-      id: crypto.randomUUID(),
-      title,
-      description,
-      category,
-      subsections: [],
-      connections: []
-    };
-    const newUniverses = universes.map(u => {
-      if (u.id === universeId) {
-        return { ...u, pages: [...u.pages, newPage] };
-      }
-      return u;
-    });
-    await saveUniverses(newUniverses);
-    return newPage;
+    try {
+      const newPage = await db.createPage({
+        universe_id: universeId,
+        title,
+        description,
+        category,
+        subsections: [],
+        connections: []
+      });
+      
+      const newUniverses = universes.map(u => {
+        if (u.id === universeId) {
+          return { ...u, pages: [...u.pages, newPage] };
+        }
+        return u;
+      });
+      await saveUniverses(newUniverses);
+      return newPage;
+    } catch (error) {
+      console.error('Failed to create page:', error);
+      throw error;
+    }
   };
 
   const updatePage = async (universeId: string, pageId: string, updates: Partial<Page>) => {
@@ -365,29 +385,34 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
   };
 
   const createSubsection = async (universeId: string, pageId: string, title: string, content: string) => {
-    const newSubsection: Subsection = {
-      id: crypto.randomUUID(),
-      title,
-      content,
-      connections: []
-    };
-    const newUniverses = universes.map(u => {
-      if (u.id === universeId) {
-        return {
-          ...u,
-          pages: u.pages.map(p => {
-            if (p.id === pageId) {
-              return { ...p, subsections: [...p.subsections, newSubsection] };
-            }
-            return p;
-          })
-        };
-      }
-      return u;
-    });
-    setUniverses(newUniverses);
-    await saveUniverses(newUniverses);
-    return newSubsection;
+    try {
+      const newSubsection = await db.createSubsection({
+        page_id: pageId,
+        title,
+        content,
+        connections: []
+      });
+      
+      const newUniverses = universes.map(u => {
+        if (u.id === universeId) {
+          return {
+            ...u,
+            pages: u.pages.map(p => {
+              if (p.id === pageId) {
+                return { ...p, subsections: [...p.subsections, newSubsection] };
+              }
+              return p;
+            })
+          };
+        }
+        return u;
+      });
+      await saveUniverses(newUniverses);
+      return newSubsection;
+    } catch (error) {
+      console.error('Failed to create subsection:', error);
+      throw error;
+    }
   };
 
   const updateSubsection = async (universeId: string, pageId: string, subsectionId: string, updates: Partial<Subsection>) => {
@@ -475,14 +500,22 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
     await saveUniverses(newUniverses);
   };
 
+  const contextValue = useMemo(() => ({
+    universes, loading, createUniverse, updateUniverse, deleteUniverse,
+    addCategory, renameCategory, deleteCategory,
+    createPage, updatePage, deletePage,
+    createSubsection, updateSubsection, deleteSubsection,
+    uploadImage, reorderUniverses, reorderPages, reorderSubsections
+  }), [
+    universes, loading, createUniverse, updateUniverse, deleteUniverse,
+    addCategory, renameCategory, deleteCategory,
+    createPage, updatePage, deletePage,
+    createSubsection, updateSubsection, deleteSubsection,
+    uploadImage, reorderUniverses, reorderPages, reorderSubsections
+  ]);
+
   return (
-    <UniverseContext.Provider value={{
-      universes, loading, createUniverse, updateUniverse, deleteUniverse,
-      addCategory, renameCategory, deleteCategory,
-      createPage, updatePage, deletePage,
-      createSubsection, updateSubsection, deleteSubsection,
-      uploadImage, reorderUniverses, reorderPages, reorderSubsections
-    }}>
+    <UniverseContext.Provider value={contextValue}>
       {children}
     </UniverseContext.Provider>
   );

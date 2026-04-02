@@ -24,6 +24,7 @@ interface DraggablePageProps {
 const DraggablePage = ({ page, index, category, currentPage, universe, searchQuery, setSelectedPage, setDeleteModal, movePage }: DraggablePageProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLButtonElement>(null);
+  const dragRef = useRef<HTMLDivElement>(null);
 
   const [{ handlerId }, drop] = useDrop({
     accept: 'page',
@@ -43,6 +44,7 @@ const DraggablePage = ({ page, index, category, currentPage, universe, searchQue
       if (dragIndex === hoverIndex && dragCategory === hoverCategory) return;
 
       const hoverBoundingRect = previewRef.current?.getBoundingClientRect();
+      if (!hoverBoundingRect) return;
       const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       const clientOffset = monitor.getClientOffset();
       if (!clientOffset) return;
@@ -68,9 +70,8 @@ const DraggablePage = ({ page, index, category, currentPage, universe, searchQue
     }),
   });
 
-  drag(ref);
+  drag(dragRef);
   drop(previewRef);
-  preview(previewRef);
 
   return (
     <button
@@ -84,7 +85,7 @@ const DraggablePage = ({ page, index, category, currentPage, universe, searchQue
       }`}
     >
       <div className="flex items-center gap-2 flex-1 min-w-0">
-        <div ref={ref} className="cursor-grab active:cursor-grabbing text-gray-400 opacity-0 group-hover:opacity-100 p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded" onClick={e => e.stopPropagation()}>
+        <div ref={dragRef} className="cursor-grab active:cursor-grabbing text-gray-400 opacity-0 group-hover:opacity-100 p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded" onClick={e => e.stopPropagation()}>
           <GripVertical className="w-3 h-3" />
         </div>
         <span className="truncate flex-1">{page.title}</span>
@@ -117,26 +118,24 @@ interface CategoryDropZoneProps {
 }
 
 const CategoryDropZone = ({ category, isExpanded, universe, movePage, children }: CategoryDropZoneProps) => {
+  const dropRef = useRef<HTMLDivElement>(null);
   const [{ isOver }, drop] = useDrop({
     accept: 'page',
-    drop(item: any, monitor) {
-      if (monitor.didDrop()) return;
-      if (item.category !== category) {
-        // Drop into empty category
-        movePage(item.index, 0, item.category, category, item.id);
-        item.category = category;
-        item.index = 0;
-      }
+    drop: (item: any) => {
+      // Handle drop logic here
+      movePage(item.index, 0, item.category, category, item.id);
     },
     collect: (monitor) => ({
-      isOver: monitor.isOver({ shallow: true }) && monitor.getItem()?.category !== category,
+      isOver: monitor.isOver(),
     }),
   });
+
+  drop(dropRef);
 
   const isUncategorized = !category || category === 'Uncategorized';
 
   return (
-    <div ref={drop} className={`space-y-1 transition-colors pb-2 ${isUncategorized ? '' : 'ml-4 border-l-2 pl-2 min-h-[10px]'} ${universe.settings?.theme === 'Dark' ? 'border-gray-600' : 'border-gray-100'} ${isOver ? 'bg-blue-50/50 dark:bg-blue-900/10 rounded-lg' : ''}`}>
+    <div ref={dropRef} className={`space-y-1 transition-colors pb-2 ${isUncategorized ? '' : 'ml-4 border-l-2 pl-2 min-h-[10px]'} ${universe.settings?.theme === 'Dark' ? 'border-gray-600' : 'border-gray-100'} ${isOver ? 'bg-blue-50/50 dark:bg-blue-900/10 rounded-lg' : ''}`}>
       {children}
     </div>
   );

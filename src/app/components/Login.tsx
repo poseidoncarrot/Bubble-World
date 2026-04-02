@@ -1,76 +1,231 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
-import { supabase, getServerUrl } from '../utils/supabase';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router';
+import { useAuth } from '../utils/AuthContext';
+import { authService } from '../services/auth';
+import { getServerUrl } from '../utils/supabase';
 
 export default function Login() {
-  const [view, setView] = useState<'login' | 'register'>('login');
+  const [view, setView] = useState<'login' | 'register' | 'confirm'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [confirmationCode, setConfirmationCode] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  // Handle email confirmation from URL parameters
+  useEffect(() => {
+    const message = searchParams.get('message');
+    const error = searchParams.get('error');
+    
+    if (message) {
+      setSuccess(decodeURIComponent(message));
+    }
+    if (error) {
+      setError(decodeURIComponent(error));
+    }
+  }, [searchParams]);
+
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const validatePassword = (password: string) => {
+    return password.length >= 6;
+  };
+
+  const resendConfirmationEmail = async () => {
+    if (!email) {
+      setError('Please enter your email address first');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await authService.resendConfirmationEmail(email);
+
+      if (error) {
+        throw error;
+      }
+
+      setSuccess('Confirmation code has been resent. Please check your inbox.');
+    } catch (err: any) {
+      setError(`Failed to resend confirmation code: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    try {
+      if (!email || !confirmationCode) {
+        throw new Error('Please enter both email and confirmation code');
+      }
+
+      const { data, error } = await authService.confirmSignUp(email, confirmationCode);
+      
+      if (error) {
+        throw error;
+      }
+
+      setSuccess('Account confirmed successfully! You can now log in.');
+      setLoading(false);
+      
+      // Switch to login view after successful confirmation
+      setTimeout(() => {
+        setView('login');
+        setSuccess('Account confirmed! Please sign in with your credentials.');
+      }, 2000);
+      
+    } catch (err: any) {
+      setError(err.message || 'Invalid confirmation code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
+      // Validation
+      if (!validateEmail(email)) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      if (!validatePassword(password)) {
+        throw new Error('Password must be at least 6 characters long');
+      }
+
       if (view === 'register') {
-        if (password !== confirmPassword) {
-          throw new Error("Passwords do not match");
+        if (!firstName.trim() || !lastName.trim()) {
+          throw new Error('Please enter both first and last name');
         }
 
-        const name = `${firstName.trim()} ${lastName.trim()}`.trim();
+        if (password !== confirmPassword) {
+          throw new Error('Passwords do not match');
+        }
 
-        try {
-          const res = await fetch(`${getServerUrl()}/signup`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, name })
-          });
-          const data = await res.json();
-          if (data.error) throw new Error(data.error);
-        } catch (e: any) {
-          // If custom signup server fails, fallback to Supabase standard auth
-          if (e.message !== "Failed to fetch") {
-             console.warn("Custom signup endpoint failed, using direct Supabase signup", e);
-          }
-          const { error: signUpError } = await supabase.auth.signUp({
-            email,
-            password,
-            options: { data: { full_name: name } }
-          });
-          if (signUpError) throw signUpError;
+        const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+
+        // Check if user already exists using Supabase's built-in protection
+        // First, attempt to sign up
+        const { data, error: signUpError } = await authService.signUp(email, password, firstName.trim(), lastName.trim());
+        
+        console.log('Signup attempt result:', { data, signUpError });
+        
+        // Supabase trick: if email enumeration protection is ON, it returns a user but with an empty identities array for duplicates
+        if (authService.checkIfUserExists(data)) {
+          throw new Error('An account with this email already exists. Please sign in instead.');
         }
         
-        // Auto sign-in
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (signInError) throw signInError;
+        if (signUpError) {
+          console.error('Signup error details:', signUpError);
+          if (signUpError.message.includes('User already registered') || 
+              signUpError.message.includes('user_already_exists')) {
+            throw new Error('An account with this email already exists. Please sign in instead.');
+          }
+          throw new Error(`Registration failed: ${signUpError.message}`);
+        }
+
+        // Handle different signup scenarios
+        if (authService.isEmailConfirmationNeeded(data)) {
+          // Email verification required - user created but not logged in
+          setSuccess('Account created successfully! Please check your email for a confirmation code.');
+          setLoading(false);
+          
+          // Switch to confirmation view after successful registration
+          setTimeout(() => {
+            setView('confirm');
+            setSuccess('Registration complete! Enter the confirmation code from your email to activate your account.');
+          }, 3000);
+          return;
+        } else if (authService.isUserImmediatelyLoggedIn(data)) {
+          // Email verification off and user is logged in immediately
+          setSuccess('Account created and logged in successfully! Redirecting...');
+          
+          // Initialize storage if needed
+          try {
+            await fetch(`${getServerUrl()}/init-storage`, { method: 'POST' });
+          } catch (e) {
+            console.warn('Storage initialization failed:', e);
+          }
+          
+          // Redirect after a short delay
+          setTimeout(() => {
+            navigate('/');
+          }, 1500);
+          return;
+        } else {
+          // Fallback success message
+          setSuccess('Registration successful. Please proceed to sign in.');
+          setLoading(false);
+          return;
+        }
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (signInError) throw signInError;
+        // Login flow
+        const { error: signInError } = await authService.signIn(email, password);
+        
+        if (signInError) {
+          console.error('Login error details:', signInError);
+          if (signInError.message.includes('Invalid login credentials')) {
+            throw new Error('Incorrect email or password. Please try again.');
+          }
+          if (signInError.message.includes('Email not confirmed')) {
+            throw new Error('Please check your email and confirm your account before signing in. Click "Resend Confirmation" if you need a new confirmation email.');
+          }
+          throw new Error(`Login failed: ${signInError.message}`);
+        }
+        
+        setSuccess('Login successful! Redirecting...');
       }
       
-      // Initialize storage on login/signup just to be safe
+      // Initialize storage if needed
       try {
         await fetch(`${getServerUrl()}/init-storage`, { method: 'POST' });
       } catch (e) {
-        // Ignore initialization failure if server is unreachable
+        // Ignore initialization failure
+        console.warn('Storage initialization failed:', e);
       }
       
-      navigate('/');
+      // Redirect after a short delay to show success message
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
+      
     } catch (err: any) {
-      setError(err.message);
+      console.error('Auth error:', err);
+      const isDuplicate = err.message?.includes('already exists') || 
+                         err.message?.includes('already registered') || 
+                         err.message?.includes('already taken');
+      
+      if (isDuplicate) {
+        setError('This email is already taken. Please sign up with another email or log into your existing account.');
+      } else {
+        setError(err.message || 'An unexpected error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -85,11 +240,49 @@ export default function Login() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-extrabold text-[#214059] mb-2">The Architect</h1>
           <p className="text-sm font-medium text-[#44474c] uppercase tracking-wider">DESIGN YOUR UNIVERSE</p>
+          {view === 'confirm' && (
+            <p className="text-sm text-[#44474c] mt-4">Enter the confirmation code from your email</p>
+          )}
         </div>
 
-        {error && <div className="bg-red-50/80 backdrop-blur-sm text-red-500 p-3 rounded-lg text-sm mb-4 border border-red-100">{error}</div>}
+        {error && (
+          <div className="bg-red-50/80 backdrop-blur-sm text-red-500 p-3 rounded-lg text-sm mb-4 border border-red-100">
+            {error}
+            {(error.includes('confirm your account') || error.includes('confirmation code')) && (
+              <button
+                type="button"
+                onClick={resendConfirmationEmail}
+                disabled={loading}
+                className="ml-2 text-red-600 underline hover:text-red-700 disabled:opacity-50"
+              >
+                Resend Code
+              </button>
+            )}
+          </div>
+        )}
+        
+        {success && (
+          <div className="bg-green-50/80 backdrop-blur-sm text-green-600 p-3 rounded-lg text-sm mb-4 border border-green-100">
+            {success}
+          </div>
+        )}
 
-        <form onSubmit={handleAuth} className="space-y-4">
+        <form onSubmit={view === 'confirm' ? handleConfirmation : handleAuth} className="space-y-4">
+          {view === 'confirm' && (
+            <div>
+              <label className="block text-sm font-medium text-[#214059] mb-1">Confirmation Code</label>
+              <input
+                type="text"
+                value={confirmationCode}
+                onChange={(e) => setConfirmationCode(e.target.value)}
+                className="w-full bg-white/50 backdrop-blur-sm p-3 rounded-xl text-[#214059] border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#214059] transition-all"
+                required
+                placeholder="Enter confirmation code"
+                maxLength={10}
+              />
+            </div>
+          )}
+          
           {view === 'register' && (
             <div className="flex gap-4">
               <div className="flex-1">
@@ -159,23 +352,42 @@ export default function Login() {
             disabled={loading}
             className="w-full bg-[#214059] text-white font-semibold py-3 rounded-xl hover:bg-[#1a3347] transition-all shadow-lg hover:shadow-xl disabled:opacity-70 mt-6"
           >
-            {loading ? 'Processing...' : view === 'register' ? 'Create Account' : 'Log In'}
+            {loading ? 'Processing...' : view === 'register' ? 'Create Account' : view === 'confirm' ? 'Confirm Account' : 'Log In'}
           </button>
         </form>
 
         <div className="mt-8 text-center">
           <p className="text-[#44474c] text-sm">
-            {view === 'login' ? "Don't have an account? " : "Already have an account? "}
+            {view === 'login' ? "Don't have an account? " : view === 'confirm' ? "Need to resend code? " : "Already have an account? "}
             <button 
               type="button"
               onClick={() => {
-                setView(view === 'login' ? 'register' : 'login');
+                if (view === 'confirm') {
+                  // Handle resend confirmation
+                  resendConfirmationEmail();
+                } else {
+                  setView(view === 'login' ? 'register' : 'login');
+                }
                 setError('');
+                setSuccess('');
               }}
               className="text-[#214059] font-semibold hover:underline"
             >
-              {view === 'login' ? 'Sign up' : 'Log in'}
+              {view === 'login' ? 'Sign up' : view === 'confirm' ? 'Resend Code' : 'Log in'}
             </button>
+            {view === 'confirm' && (
+              <button 
+                type="button"
+                onClick={() => {
+                  setView('login');
+                  setError('');
+                  setSuccess('');
+                }}
+                className="text-[#214059] font-semibold hover:underline ml-4"
+              >
+                Back to Login
+              </button>
+            )}
           </p>
         </div>
       </div>

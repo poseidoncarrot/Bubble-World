@@ -127,7 +127,7 @@ app.post("/make-server-e5956044/signup", async (c) => {
       email,
       password,
       user_metadata: { name: name || 'Architect' },
-      email_confirm: true
+      email_confirm: false // Require email confirmation
     });
     if (error) return c.json({ error: error.message }, 400);
     return c.json({ data });

@@ -48,6 +48,8 @@ export default function BubbleMap() {
 
   // Generate nodes positions (simple layout: circle for pages, ring for subsections)
   const nodes = useMemo(() => {
+    if (!universe) return [];
+    
     const pages = universe.pages;
     const items: Array<{ id: string, type: 'page' | 'subsection', title: string, x: number, y: number, parentId?: string, matchesSearch: boolean }> = [];
     

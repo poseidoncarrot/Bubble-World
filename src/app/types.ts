@@ -3,6 +3,7 @@ export interface Subsection {
   title: string;
   content: string;
   connections: string[]; // IDs of other subsections this is connected to
+  position?: { x?: number; y?: number }; // Position for bubble map
 }
 
 export interface Page {
@@ -13,6 +14,7 @@ export interface Page {
   subsections: Subsection[];
   connections: string[]; // IDs of other pages this is connected to
   category?: string; // New field for custom categories
+  position?: { x?: number; y?: number }; // Position for bubble map
 }
 
 export interface Universe {
@@ -30,5 +32,13 @@ export interface UniverseSettings {
   font?: string;
   color?: string;
   worldbuildingDetails?: string;
+}
+
+export interface Connection {
+  id: string;
+  sourceType: 'page' | 'subsection';
+  sourceId: string;
+  targetType: 'page' | 'subsection';
+  targetId: string;
 }
 

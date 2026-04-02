@@ -92,7 +92,7 @@ const UniverseItem = ({ universe, index, moveUniverse, navigate }: UniverseItemP
 
 export default function WorldsList() {
   const { universes, createUniverse, uploadImage, reorderUniverses } = useUniverseStore();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newUniverseName, setNewUniverseName] = useState('');
   const [newUniverseDescription, setNewUniverseDescription] = useState('');
@@ -134,7 +134,7 @@ export default function WorldsList() {
       }} />
       
       <div className="absolute top-6 right-6 z-20 flex items-center gap-4">
-        <button onClick={() => supabase.auth.signOut()} className="bg-white/50 backdrop-blur-md p-3 rounded-full hover:bg-white/80 transition-colors">
+        <button onClick={() => signOut()} className="bg-white/50 backdrop-blur-md p-3 rounded-full hover:bg-white/80 transition-colors">
           <LogOut className="w-5 h-5 text-[#214059]" />
         </button>
       </div>
