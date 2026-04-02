@@ -1,241 +1,242 @@
-# Bubble World MVP
+# Bubble World
 
-A worldbuilding organization application that combines structured content management with visual bubble mapping.
+A creative worldbuilding application that allows users to create, organize, and explore fictional universes through interconnected pages, subsections, and visual bubble maps.
 
-## Potential Future Ideas
-- **Separation of User Database Storage**: Every user's sign-in should not be linked together
-- **Connection of Worlds**: Different worlds can be connected together, like how ideas within them are connected
+## 🌟 Features
 
-## 🎯 Features
-
-### Core MVP Features
-- **Trial-first approach**: 5-minute full access without signup
-- **Rich text editing**: Tables, images, and formatting tools
-- **Hierarchical navigation**: Tree-style sidebar for world organization
-- **Bubble map visualization**: Interactive force-directed graph of world connections
-- **Dual storage**: Local storage for trials, cloud storage for accounts
-- **Auto-save**: Every 5 minutes to prevent data loss
-
-### UI Features
-- **Glass morphism design**: Modern, Apple-inspired interface
-- **Desktop-only focus**: Optimized for desktop experience
-- **Real-time sync status**: Visual indicators for save state
-- **Responsive interactions**: Hover effects and smooth transitions
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-- Supabase account (for cloud storage)
-
-### Option 1: Automated Setup
-```bash
-# Clone the repository
-git clone <repository-url>
-cd bubble-world-app
-
-# Run the setup script
-./scripts/setup.sh
-```
-
-### Option 2: Manual Setup
-
-1. **Clone the repository**
-```bash
-git clone <repository-url>
-cd bubble-world-app
-```
-
-2. **Install dependencies**
-```bash
-npm install
-```
-
-3. **Set up environment variables**
-```bash
-# Create .env file
-cp .env.example .env.local
-
-# Add your Supabase credentials
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-4. **Set up Supabase database**
-   - Create a new project at [supabase.com](https://supabase.com)
-   - Run the SQL migration from `supabase/migrations/001_initial_schema.sql`
-   - Enable authentication providers
-
-5. **Start development server**
-```bash
-npm run dev
-```
-
-6. **Open your browser**
-Navigate to `http://localhost:5173`
+- **World Creation**: Build rich fictional universes with custom settings, categories, and themes
+- **Hierarchical Organization**: Structure your world with Universes > Pages > Subsections
+- **Visual Mapping**: Explore connections between elements through interactive bubble maps
+- **Rich Content Editor**: Create detailed content with rich text editing capabilities
+- **Drag & Drop**: Intuitive bubble map manipulation with drag-and-drop functionality
+- **Authentication**: Secure user authentication via Supabase
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
 
 ## 🏗️ Architecture
 
-### Technology Stack
-- **Frontend**: React 18 + TypeScript
-- **Styling**: Tailwind CSS with custom design system
-- **Rich Text**: Tiptap with ProseMirror
-- **Visualization**: D3.js force-directed graphs
-- **Backend**: Supabase (PostgreSQL)
-- **Build Tool**: Vite
+### Tech Stack
+
+- **Frontend**: React 18.3.1 with TypeScript
+- **Build Tool**: Vite 6.3.5
+- **UI Framework**: Material-UI (@mui/material) + Radix UI
+- **Styling**: Tailwind CSS 4.1.12
+- **Backend**: Supabase (authentication & database)
+- **State Management**: React Hooks + Context API
+- **Routing**: React Router v7
+- **Drag & Drop**: react-dnd with HTML5Backend
 
 ### Project Structure
+
 ```
-bubble-world-app/
-├── src/
-│   ├── components/
+src/
+├── app/
+│   ├── components/          # React components
 │   │   ├── ui/              # Reusable UI components
-│   │   ├── editor/          # Rich text editor components
-│   │   ├── bubble-map/      # D3.js visualization
-│   │   └── layout/          # Layout components
-│   ├── pages/               # Page components
-│   ├── hooks/               # Custom React hooks
-│   ├── services/            # API and data services
-│   ├── types/               # TypeScript definitions
+│   │   ├── Editor.tsx       # Main editor component
+│   │   ├── BubbleMap.tsx    # Visual bubble map
+│   │   ├── WorldsList.tsx   # World listing
+│   │   └── Login.tsx        # Authentication
 │   ├── utils/               # Utility functions
-│   └── styles/              # Global styles
-├── supabase/
-│   ├── migrations/          # Database migrations
-│   ├── functions/           # Edge functions
-│   └── seed.sql            # Sample data
-└── docs/                   # Documentation
+│   │   ├── storage.ts       # Local storage helpers
+│   │   ├── supabase.ts      # Supabase client
+│   │   └── seedData.ts      # Sample data
+│   ├── types.ts             # TypeScript type definitions
+│   ├── routes.tsx           # Application routing
+│   ├── App.tsx              # Root application component
+│   └── Root.tsx             # Layout component
+├── styles/                  # Global styles
+└── imports/                 # Generated imports
 ```
 
-## 📊 Database Schema
+## 🚀 Getting Started
 
-### Core Tables
-- **users**: User accounts and authentication
-- **worlds**: Worldbuilding projects
-- **pages**: Hierarchical content pages
-- **page_connections**: Relationships between pages
-- **user_sessions**: Trial session tracking
+### Prerequisites
 
-## 🔐 Authentication
+- Node.js 18+ 
+- npm, yarn, or pnpm
+- Supabase account and project
 
-### Trial Flow
-1. **Anonymous Session**: Generate unique session ID
-2. **5-Minute Timer**: Full app access with countdown
-3. **Exit Intent Detection**: Mouse leaving viewport triggers prompt
-4. **Conversion Prompt**: "Save your work? Sign up or continue locally"
-5. **Local Storage Fallback**: If no signup, save to localStorage
+### Installation
 
-### Account Types
-- **Trial Users**: Full functionality, data saved locally
-- **Account Users**: Full functionality, data saved to cloud
-- **No Paid Tier**: All features available to all users
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/Bubble-World.git
+   cd Bubble-World
+   ```
 
-## 📝 Usage Guide
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   # or
+   pnpm install
+   ```
 
-### Creating Your First World
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Update `.env` with your Supabase configuration:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
 
-1. **Start Trial**: Click "Try for 5 minutes" on the login screen
-2. **Create World**: Click "Create New World" on the dashboard
-3. **Add Pages**: Use the sidebar to create hierarchical content
-4. **Edit Content**: Use the rich text editor with formatting tools
-5. **Visualize**: Switch to Map view to see bubble connections
-6. **Save Work**: Sign up to save to cloud or continue locally
+4. **Start the development server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   # or
+   pnpm dev
+   ```
 
-### Navigation
-- **Dashboard**: List and manage worlds
-- **Editor**: Create and edit content with rich text
-- **Map**: Visual bubble map of world connections
-- **Sidebar**: Hierarchical navigation tree
+5. **Open your browser**
+   Navigate to `http://localhost:5173`
 
-### Keyboard Shortcuts
-- **Undo**: Ctrl+Z
-- **Redo**: Ctrl+Shift+Z
-- **Standard shortcuts**: Ctrl+C, Ctrl+V, Ctrl+X
+## 📖 Usage
+
+### Creating a World
+
+1. Sign in with your account
+2. Click "Create New World" on the main dashboard
+3. Fill in world details (name, description, icon)
+4. Configure world settings and categories
+
+### Building Content
+
+1. Navigate to your world's editor
+2. Create pages with titles and descriptions
+3. Add subsections with rich content
+4. Establish connections between related elements
+
+### Visual Mapping
+
+1. Switch to the "Map" view for your world
+2. Drag bubbles to reorganize the layout
+3. Click connections to explore relationships
+4. Use the map to discover new content connections
 
 ## 🎨 Design System
 
-### Color Palette
-```css
---primary: #214059;           /* Deep blue */
---primary-container: #395771; /* Lighter blue */
---surface: #f8f9fa;            /* Light background */
---surface-container: #edeeef;  /* Card background */
---on-surface: #191c1d;         /* Text */
---outline: #75777d;            /* Borders */
-```
-
-### Typography
-- **Headlines**: Manrope (bold, extra-bold)
-- **Body**: Inter (regular, medium)
-- **Labels**: Inter (semibold)
-
 ### UI Components
-- **Glass Morphism**: Backdrop blur effects throughout
-- **Floating Elements**: Toolbars and modals with shadows
-- **Interactive Bubbles**: Hover effects and transitions
-- **Status Bar**: Bottom sync indicators
+
+- **Material-UI**: Primary component library
+- **Radix UI**: Accessible primitives
+- **Lucide React**: Icon system
+- **Tailwind CSS**: Utility-first styling
+
+### Theme Customization
+
+The application uses a customizable theme system. Modify the theme in:
+
+```typescript
+// src/app/utils/theme.ts
+export const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#your-primary-color',
+    },
+    // ... other theme customizations
+  },
+});
+```
 
 ## 🔧 Development
 
 ### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run type-check` - Run TypeScript checks
+
+### Code Style
+
+- **TypeScript**: Strict mode enabled
+- **ESLint**: Configured for React and TypeScript
+- **Prettier**: Code formatting (if configured)
+- **Component Structure**: Functional components with hooks
+
+### Testing
+
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run preview      # Preview production build
-npm run lint         # Run ESLint
-npm run type-check   # Run TypeScript check
+# Run tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
 ```
 
-### Environment Variables
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+## 🗄️ Database Schema
+
+### Core Tables
+
+- **universes**: World containers with settings
+- **pages**: Content pages within universes  
+- **subsections**: Detailed content sections
+- **connections**: Relationships between elements
+
+### Data Model
+
+```typescript
+interface Universe {
+  id: string;
+  name: string;
+  description: string;
+  icon?: string;
+  pages: Page[];
+  settings?: UniverseSettings;
+  categories?: string[];
+}
+
+interface Page {
+  id: string;
+  title: string;
+  description: string;
+  coverImage?: string;
+  subsections: Subsection[];
+  connections: string[];
+  category?: string;
+}
+
+interface Subsection {
+  id: string;
+  title: string;
+  content: string;
+  connections: string[];
+}
 ```
-
-### Supabase Setup
-1. Create a new Supabase project
-2. Run the provided SQL migrations
-3. Enable authentication providers
-4. Configure CORS settings
-5. Update environment variables
-
-## 📈 Performance
-
-### Optimization Features
-- **Code Splitting**: Lazy load heavy components
-- **Virtual Scrolling**: For large page lists
-- **Auto-save**: Every 5 minutes with debouncing
-- **Memory Management**: Cleanup strategies for large datasets
-
-### Metrics
-- **Page Load Time**: < 2 seconds initial load
-- **Search Response**: < 500ms for search queries
-- **Auto-save Frequency**: Every 5 minutes
-- **Memory Usage**: < 100MB for typical world
 
 ## 🚀 Deployment
 
-### Production Deployment
-1. **Build the application**
+### Production Build
+
 ```bash
 npm run build
 ```
 
-2. **Deploy to Vercel**
-```bash
-npm install -g vercel
-vercel --prod
-```
-
-3. **Configure Supabase**
-   - Update CORS origins
-   - Enable production auth providers
-   - Set up custom domain
-
 ### Environment Setup
-- **Frontend**: Vercel (recommended)
-- **Backend**: Supabase (managed)
-- **Domain**: Custom domain with SSL
+
+1. Set production environment variables
+2. Configure Supabase for production
+3. Deploy to your preferred platform (Vercel, Netlify, etc.)
+
+### Docker Deployment
+
+```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+EXPOSE 4173
+CMD ["npm", "run", "preview"]
+```
 
 ## 🤝 Contributing
 
@@ -245,25 +246,33 @@ vercel --prod
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+### Development Guidelines
+
+- Follow the existing code style and patterns
+- Add TypeScript types for new features
+- Include tests for new functionality
+- Update documentation as needed
+- Ensure accessibility compliance
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- **Supabase** - Backend and authentication
-- **Tiptap** - Rich text editing
-- **D3.js** - Data visualization
-- **Tailwind CSS** - Styling framework
-- **Google Stitch** - Design inspiration
+- [Supabase](https://supabase.com/) for the backend services
+- [Material-UI](https://mui.com/) for the component library
+- [Radix UI](https://www.radix-ui.com/) for accessible primitives
+- [Tailwind CSS](https://tailwindcss.com/) for styling utilities
 
 ## 📞 Support
 
-For support and questions:
-- Create an issue on GitHub
-- Check the [documentation](./docs/)
-- Review the [FAQ](./docs/faq.md)
+If you encounter any issues or have questions:
+
+1. Check the [Issues](https://github.com/your-username/Bubble-World/issues) page
+2. Create a new issue with detailed information
+3. Join our community discussions
 
 ---
 
-**Built with ❤️ for worldbuilders and storytellers**
+Built with ❤️ for creative worldbuilders and storytellers.
