@@ -7,10 +7,10 @@
     "node": "24.x"
   },
   "scripts": {
-    "build": "npx vite build",
-    "dev": "npx vite",
-    "preview": "npx vite preview",
-    "build:analyze": "npx vite build --mode analyze"
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "build:analyze": "vite build --mode analyze"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -80,6 +80,6 @@
     "autoprefixer": "10.4.20",
     "tailwindcss": "4.0.0",
     "typescript": "5.7.3",
-    "vite": "^6.4.1"
+    "vite": "6.0.5"
   }
 }
