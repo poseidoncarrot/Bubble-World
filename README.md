@@ -282,24 +282,56 @@ interface Subsection {
 
 ## 🚀 Deployment
 
-### Production Build
+### Vercel Deployment (Recommended)
+
+#### Quick Deploy with GitHub Integration
+1. **Push to GitHub**: Ensure your code is pushed to a GitHub repository
+2. **Connect to Vercel**: 
+   - Sign up/login to [Vercel](https://vercel.com)
+   - Click "New Project" and connect your GitHub account
+   - Select your Bubble-World repository
+3. **Configure Environment Variables**:
+   ```
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_public_key
+   ```
+4. **Deploy**: Click "Deploy" - Vercel will automatically detect the Vite configuration
+5. **Custom Domain** (Optional): Add your custom domain in Vercel dashboard
+
+#### Manual Vercel CLI Deployment
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Login to Vercel
+vercel login
+
+# Deploy from project root
+vercel
+
+# For production deployment
+vercel --prod
+```
+
+#### Environment Setup for Vercel
+- **Production Variables**: Set in Vercel dashboard under Settings > Environment Variables
+- **Supabase Production**: Ensure your Supabase project is in production mode
+- **Custom Domain**: Configure in Vercel dashboard if needed
+
+### Other Deployment Platforms
+
+#### Production Build
 ```bash
 npm run build
 ```
 The optimized build will be in the `dist/` directory.
 
-### Environment Setup
-1. **Production Variables**: Set production environment variables
-2. **Supabase Production**: Configure Supabase for production use
-3. **Deploy**: Upload to your preferred hosting platform
-
-### Deployment Platforms
-- **Vercel**: Recommended for seamless integration
-- **Netlify**: Alternative static hosting
+#### Alternative Platforms
+- **Netlify**: Static hosting with drag-and-drop deployment
 - **AWS S3 + CloudFront**: For custom infrastructure
 - **Docker**: Container-based deployment
 
-### Docker Configuration
+#### Docker Configuration
 ```dockerfile
 FROM node:18-alpine
 WORKDIR /app

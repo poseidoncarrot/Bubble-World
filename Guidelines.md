@@ -191,10 +191,34 @@ Bubble World is a sophisticated worldbuilding application that enables users to 
 - **Scaling**: Consider CDN and horizontal scaling needs
 
 ### Deployment Platforms
-- **Static Hosting**: Vercel, Netlify, or similar for frontend
+- **Primary**: Vercel for seamless deployment and automatic scaling
+- **Static Hosting**: Netlify, or similar for frontend-only deployment
 - **Backend**: Supabase for managed backend services
 - **CI/CD**: GitHub Actions or similar for automated deployment
 - **Rollback**: Strategy for quick rollback on deployment issues
+
+### Vercel Deployment Guidelines
+- **Configuration**: Use `vercel.json` for build and deployment settings
+- **Environment Variables**: Set in Vercel dashboard, not in code
+- **Automatic Detection**: Vercel automatically detects Vite configuration
+- **Preview Deployments**: Automatic preview deployments for pull requests
+- **Custom Domains**: Configure in Vercel dashboard with automatic SSL
+- **Performance**: Leverage Vercel Edge Network for global CDN
+
+### Vercel Configuration
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
+- **Install Command**: `npm install`
+- **Framework**: Vite (auto-detected)
+- **Node Version**: 18.x or higher
+- **Environment Variables**: Use Vercel dashboard for production secrets
+
+### Vercel Best Practices
+- **Preview Deployments**: Enable for all pull requests
+- **Environment Separation**: Use different environments for dev/staging/prod
+- **Performance Monitoring**: Enable Vercel Analytics
+- **Error Tracking**: Configure error reporting for production
+- **Custom Headers**: Use `vercel.json` for security headers and caching
 
 ## Maintenance and Evolution
 

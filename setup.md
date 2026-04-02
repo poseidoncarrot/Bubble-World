@@ -189,3 +189,78 @@ If you encounter issues:
 - **Memoization**: Expensive calculations cached appropriately
 
 The application provides a robust, scalable solution for creative worldbuilding with enterprise-grade security and performance optimizations.
+
+## 🚀 Vercel Deployment
+
+### Prerequisites for Vercel
+- GitHub repository with your code pushed
+- Supabase project configured and running
+- Vercel account (free tier is sufficient)
+
+### Quick Deploy via Vercel Dashboard
+1. **Connect Repository**:
+   - Go to [Vercel](https://vercel.com) and sign in
+   - Click "New Project"
+   - Import your GitHub repository
+
+2. **Configure Build Settings**:
+   - Vercel will automatically detect the Vite configuration
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+   - Install Command: `npm install`
+
+3. **Set Environment Variables**:
+   ```
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_public_key
+   ```
+
+4. **Deploy**: Click "Deploy" and wait for the build to complete
+
+### Manual Deployment with Vercel CLI
+```bash
+# Install Vercel CLI globally
+npm i -g vercel
+
+# Login to your Vercel account
+vercel login
+
+# Deploy from project root
+vercel
+
+# For production deployment
+vercel --prod
+```
+
+### Post-Deployment Checklist
+- [ ] Environment variables are set correctly in Vercel dashboard
+- [ ] Supabase connection is working (test authentication)
+- [ ] Custom domain is configured (if applicable)
+- [ ] Build completes successfully without errors
+- [ ] Application loads and functions properly
+
+### Environment Variables in Vercel
+1. Go to your project dashboard in Vercel
+2. Navigate to Settings > Environment Variables
+3. Add the following variables:
+   - `VITE_SUPABASE_URL` (your Supabase project URL)
+   - `VITE_SUPABASE_ANON_KEY` (your Supabase anon public key)
+
+### Custom Domain Setup (Optional)
+1. In Vercel dashboard, go to Settings > Domains
+2. Add your custom domain
+3. Configure DNS records as instructed by Vercel
+4. Update your Supabase CORS settings to include the new domain
+
+### Troubleshooting Vercel Deployment
+1. **Build Failures**: Check the build logs for specific error messages
+2. **Environment Variables**: Ensure all required variables are set in Vercel dashboard
+3. **Supabase Connection**: Verify your Supabase URL and keys are correct
+4. **CORS Issues**: Update Supabase CORS settings to include your Vercel domain
+5. **Asset Loading**: Ensure all static assets are properly referenced
+
+### Performance Optimization for Vercel
+- Enable automatic compression in Vercel settings
+- Configure proper caching headers for static assets
+- Use Vercel Analytics to monitor performance
+- Consider Vercel Edge Functions for future enhancements
