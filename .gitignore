@@ -43,3 +43,4 @@ coverage/
 pnpm-debug.log*
 lerna-debug.log*
 *.tsbuildinfo
+.env*.local
