@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { Globe, Plus, Book, Settings, LogOut, Upload } from 'lucide-react';
 import { useUniverseStore } from '../utils/UniverseContext';
 import { useAuth } from '../utils/AuthContext';

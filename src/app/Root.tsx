@@ -1,4 +1,4 @@
-import { Outlet, Navigate, useLocation } from 'react-router';
+import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './utils/AuthContext';
 import { UniverseProvider } from './utils/UniverseContext';
 

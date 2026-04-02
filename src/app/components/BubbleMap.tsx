@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useParams, Link, useNavigate } from 'react-router';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Search, ZoomIn, ZoomOut, Link as LinkIcon, Edit3, X, ChevronDown, ChevronRight, Book, ArrowLeft, Settings, Trash2 } from 'lucide-react';
 import { useUniverseStore } from '../utils/UniverseContext';
 import { Page, Subsection } from '../types';

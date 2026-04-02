@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter } from 'react-router-dom';
 import Root from './Root';
 import WorldsList from './components/WorldsList';
 import Editor from './components/Editor';

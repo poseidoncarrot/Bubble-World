@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Book, Plus, MapIcon, Settings, ChevronDown, ChevronRight, Edit, Trash2, Link as LinkIcon, Image as ImageIcon, Upload, X, ArrowLeft, Pencil, Search, GripVertical, Layers } from 'lucide-react';
 import { useUniverseStore } from '../utils/UniverseContext';
 import { Universe, Page, Subsection } from '../types';
