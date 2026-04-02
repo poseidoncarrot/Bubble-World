@@ -91,7 +91,7 @@ const UniverseItem = ({ universe, index, moveUniverse, navigate }: UniverseItemP
 };
 
 export default function WorldsList() {
-  const { universes, createUniverse, uploadImage, reorderUniverses } = useUniverseStore();
+  const { universes, createUniverse, uploadImage, reorderUniverses, loading: universesLoading } = useUniverseStore();
   const { user, signOut } = useAuth();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newUniverseName, setNewUniverseName] = useState('');
@@ -149,7 +149,16 @@ export default function WorldsList() {
           </div>
         </div>
 
-        {universes.length === 0 ? (
+        {universesLoading ? (
+          <div className="backdrop-blur-[10px] bg-[rgba(255,255,255,0.7)] rounded-[48px] border border-[rgba(255,255,255,0.2)] shadow-[0px_12px_40px_0px_rgba(25,28,29,0.06)] p-12 max-w-[480px] w-full">
+            <div className="flex flex-col items-center gap-6 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#214059]"></div>
+              <p className="font-normal text-[#44474c] text-[14px]">
+                Loading your universes...
+              </p>
+            </div>
+          </div>
+        ) : universes.length === 0 ? (
           <div className="backdrop-blur-[10px] bg-[rgba(255,255,255,0.7)] rounded-[48px] border border-[rgba(255,255,255,0.2)] shadow-[0px_12px_40px_0px_rgba(25,28,29,0.06)] p-12 max-w-[480px] w-full">
             <div className="flex flex-col items-center gap-6 text-center">
               <div className="bg-gradient-to-r from-[#214059] to-[#395771] rounded-full p-6">
