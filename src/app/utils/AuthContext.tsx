@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from './supabase';
 import { User, Session } from '@supabase/supabase-js';
+import { useInactivityTracker } from './useInactivityTracker';
 
 type AuthContextType = {
   user: User | null;
@@ -20,6 +21,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Initialize inactivity tracker
+  useInactivityTracker();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
