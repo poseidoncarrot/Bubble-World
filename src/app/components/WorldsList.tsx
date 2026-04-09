@@ -1,9 +1,9 @@
 import { useState, useRef } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Globe, Plus, Book, Settings, LogOut, Upload } from 'lucide-react';
+import { Globe, Plus, Book, LogOut, Upload } from 'lucide-react';
 import { useUniverseStore } from '../contexts/UniverseContext';
 import { useAuth } from '../utils/AuthContext';
-import { supabase } from '../utils/supabase';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useDrag, useDrop } from 'react-dnd';
 
@@ -14,7 +14,7 @@ interface UniverseItemProps {
   navigate: (path: string) => void;
 }
 
-const UniverseItem = ({ universe, index, moveUniverse, navigate }: UniverseItemProps) => {
+const UniverseItem = React.memo(({ universe, index, moveUniverse, navigate }: UniverseItemProps) => {
   const ref = useRef<HTMLButtonElement>(null);
 
   const [{ handlerId }, drop] = useDrop({
@@ -88,11 +88,11 @@ const UniverseItem = ({ universe, index, moveUniverse, navigate }: UniverseItemP
       </div>
     </button>
   );
-};
+});
 
 export default function WorldsList() {
   const { universes, createUniverse, uploadImage, reorderUniverses, loading: universesLoading } = useUniverseStore();
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newUniverseName, setNewUniverseName] = useState('');
   const [newUniverseDescription, setNewUniverseDescription] = useState('');

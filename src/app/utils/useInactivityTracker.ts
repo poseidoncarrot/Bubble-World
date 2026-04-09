@@ -142,7 +142,7 @@ export const useInactivityTracker = () => {
       } else if (event === 'scroll') {
         document.addEventListener(event, handleActivity, { passive: true, capture: true });
       } else {
-        document.addEventListener(event, handleActivity, true);
+        document.addEventListener(event, handleActivity, { capture: true });
       }
     });
 
@@ -168,7 +168,7 @@ export const useInactivityTracker = () => {
         if (event === 'mousemove') {
           document.removeEventListener(event, handleMouseMove, true);
         } else if (event === 'scroll') {
-          document.removeEventListener(event, handleActivity, { capture: true } as any);
+          document.removeEventListener(event, handleActivity, true);
         } else {
           document.removeEventListener(event, handleActivity, true);
         }

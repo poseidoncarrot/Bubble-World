@@ -1,18 +1,7 @@
 import { useRef, useEffect, memo, useCallback } from 'react';
-import { Bold, Italic, Type, Palette } from 'lucide-react';
-
-// Debounce function to limit update frequency
-const debounce = <T extends (...args: any[]) => void>(func: T, wait: number): T => {
-  let timeout: NodeJS.Timeout;
-  return ((...args: any[]) => {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  }) as T;
-};
+import React from 'react';
+import { Bold, Italic } from 'lucide-react';
+import { useDebounce } from '../hooks/useDebounce';
 
 interface EditorDivProps {
   initialContent: string;
@@ -49,7 +38,7 @@ const EditorDiv = memo(({ initialContent, onInput, onBlur, innerRef, theme }: Ed
   );
 }, () => true); // Never re-render from props
 
-export function RichTextEditor({ content, onChange, theme }: { content: string, onChange: (c: string) => void, theme: string }) {
+export const RichTextEditor = React.memo(({ content, onChange, theme }: { content: string, onChange: (c: string) => void, theme: string }) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef(content);
   const onChangeRef = useRef(onChange);
@@ -94,7 +83,7 @@ export function RichTextEditor({ content, onChange, theme }: { content: string, 
   }, []);
 
   const handleInput = useCallback(
-    debounce((e: React.FormEvent<HTMLDivElement>) => {
+    useDebounce((e: React.FormEvent<HTMLDivElement>) => {
       const html = e.currentTarget.innerHTML;
       contentRef.current = html;
       onChangeRef.current(html);
@@ -214,4 +203,4 @@ export function RichTextEditor({ content, onChange, theme }: { content: string, 
       />
     </div>
   );
-}
+});
