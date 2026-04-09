@@ -27,10 +27,10 @@ export const BubbleNode = ({
   return (
     <div 
       key={node.id}
-      className={`absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 rounded-full flex flex-col items-center justify-center text-center shadow-lg border-2 transition-all cursor-pointer group ${
+      className={`absolute top-0 left-0 rounded-full flex flex-col items-center justify-center text-center shadow-lg border-2 transition-all cursor-pointer group ${
         node.type === 'page' ? 'w-32 h-32 bg-white border-[#214059]' : 'w-24 h-24 bg-[#f8f9fa] border-gray-300'
       } ${!node.matchesSearch ? 'opacity-20' : ''} ${connectingFrom?.id === node.id ? 'ring-4 ring-blue-500' : ''}`}
-      style={{ transform: `translate(${node.x}px, ${node.y}px)` }}
+      style={{ transform: `translate(${node.x}px, ${node.y}px) translate(-50%, -50%)` }}
       onClick={(e) => { e.stopPropagation(); onNodeClick(node); }}
     >
       <div className="font-bold text-[12px] text-[#214059] px-2 leading-tight">

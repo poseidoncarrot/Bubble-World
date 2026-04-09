@@ -73,14 +73,27 @@ export const useBubbleMap = (universe: Universe | undefined, searchQuery: string
       p.subsections.forEach(s => {
         const sNode = nodes.find(n => n.id === s.id);
         if (pNode && sNode) {
-          edgesArray.push({ x1: pNode.x, y1: pNode.y, x2: sNode.x, y2: sNode.y, type: 'hierarchy' });
+          // Account for bubble centering transforms (-translate-x-1/2 -translate-y-1/2)
+          edgesArray.push({ 
+            x1: pNode.x, 
+            y1: pNode.y, 
+            x2: sNode.x, 
+            y2: sNode.y, 
+            type: 'hierarchy' 
+          });
         }
       });
       // Page to Connections
       p.connections.forEach(cId => {
         const cNode = nodes.find(n => n.id === cId);
         if (pNode && cNode) {
-          edgesArray.push({ x1: pNode.x, y1: pNode.y, x2: cNode.x, y2: cNode.y, type: 'connection' });
+          edgesArray.push({ 
+            x1: pNode.x, 
+            y1: pNode.y, 
+            x2: cNode.x, 
+            y2: cNode.y, 
+            type: 'connection' 
+          });
         }
       });
       // Subsection to Connections
@@ -89,7 +102,13 @@ export const useBubbleMap = (universe: Universe | undefined, searchQuery: string
         s.connections.forEach(cId => {
           const cNode = nodes.find(n => n.id === cId);
           if (sNode && cNode) {
-            edgesArray.push({ x1: sNode.x, y1: sNode.y, x2: cNode.x, y2: cNode.y, type: 'connection' });
+            edgesArray.push({ 
+              x1: sNode.x, 
+              y1: sNode.y, 
+              x2: cNode.x, 
+              y2: cNode.y, 
+              type: 'connection' 
+            });
           }
         });
       });
