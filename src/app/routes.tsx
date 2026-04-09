@@ -4,6 +4,8 @@ import WorldsList from './components/WorldsList';
 import Editor from './components/Editor';
 import BubbleMap from './components/BubbleMap';
 import Login from './components/Login';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
 
 export const router = createBrowserRouter([
   {
@@ -22,6 +24,14 @@ export const router = createBrowserRouter([
       {
         path: 'login',
         Component: Login
+      },
+      {
+        path: 'forgot-password',
+        Component: ForgotPassword
+      },
+      {
+        path: 'reset-password',
+        Component: ResetPassword
       }
     ]
   }

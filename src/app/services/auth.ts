@@ -1,5 +1,5 @@
 import { supabase } from '../utils/supabase';
-import { AuthResponse as SupabaseAuthResponse, User } from '@supabase/supabase-js';
+import { AuthResponse as SupabaseAuthResponse } from '@supabase/supabase-js';
 
 export interface AuthResponse {
   data: SupabaseAuthResponse['data'];
@@ -93,5 +93,23 @@ export const authService = {
   // Helper method to check if user is immediately logged in
   isUserImmediatelyLoggedIn(signUpData: AuthResponse['data']): boolean {
     return !!(signUpData?.session !== null);
-  }
-};
+  },
+
+  // Password reset functionality
+  async resetPassword(email: string): Promise<{ error: any }> {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    });
+    
+    return { error };
+  },
+
+  async updatePassword(newPassword: string): Promise<{ error: any }> {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+    
+    return { error };
+  },
+
+  };

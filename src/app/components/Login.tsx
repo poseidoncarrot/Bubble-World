@@ -356,6 +356,18 @@ export default function Login() {
           </button>
         </form>
 
+        {view === 'login' && (
+          <div className="mt-6 text-center">
+            <button 
+              type="button"
+              onClick={() => navigate('/forgot-password')}
+              className="text-[#214059] text-sm font-semibold hover:underline"
+            >
+              Forgot Password?
+            </button>
+          </div>
+        )}
+
         <div className="mt-8 text-center">
           <p className="text-[#44474c] text-sm">
             {view === 'login' ? "Don't have an account? " : view === 'confirm' ? "Need to resend code? " : "Already have an account? "}

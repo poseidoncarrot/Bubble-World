@@ -1,6 +1,5 @@
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './utils/AuthContext';
-import { useUniverseStore } from './contexts/UniverseContext';
 
 export default function Root() {
   const { user, loading } = useAuth();
@@ -10,7 +9,7 @@ export default function Root() {
     return <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">Loading...</div>;
   }
 
-  if (!user && location.pathname !== '/login') {
+  if (!user && !['/login', '/forgot-password', '/reset-password'].includes(location.pathname)) {
     return <Navigate to="/login" replace />;
   }
 
