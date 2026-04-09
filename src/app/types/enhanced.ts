@@ -32,6 +32,27 @@ export interface DragItem {
   id: string;
   index: number;
   type: string;
+  category?: string;
+}
+
+export interface DropTarget {
+  index: number;
+  category?: string;
+}
+
+// React DnD monitor types
+export interface DragMonitor {
+  isDragging(): boolean;
+  getItem(): DragItem;
+  getItemType(): string;
+  getClientOffset(): { x: number; y: number } | null;
+  getDifferenceFromInitialOffset(): { x: number; y: number } | null;
+}
+
+export interface DropMonitor {
+  isOver(): boolean;
+  canDrop(): boolean;
+  getItem(): DragItem;
 }
 
 export interface BubbleNode {

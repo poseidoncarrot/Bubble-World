@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import * as db from '../utils/database';
 import { Universe } from '../types';
@@ -16,6 +16,7 @@ export const UniverseDataProvider = ({ children }: { children: React.ReactNode }
   const { session, user } = useAuth();
   const [universes, setUniverses] = useState<Universe[]>([]);
   const [loading, setLoading] = useState(true);
+  const refreshIdRef = useRef<number>(0);
 
   const saveUniverses = useCallback(async (newUniverses: Universe[]) => {
     setUniverses(newUniverses);
@@ -39,27 +40,26 @@ export const UniverseDataProvider = ({ children }: { children: React.ReactNode }
     }
 
     // Prevent multiple simultaneous refreshes
-    const refreshId = Date.now();
-    (refreshUniverses as any).currentId = refreshId;
+    const refreshId = ++refreshIdRef.current;
 
     try {
       setLoading(true);
       console.log('Fetching universes for user:', user.id);
-      
+
       // Check if database functions are available
       if (!db.getUniverses || !db.getPages) {
         throw new Error('Database functions not available');
       }
-      
+
       const universesData = await db.getUniverses(user.id);
       console.log('Universes data:', universesData);
-      
+
       // Check if this refresh is still the latest one
-      if ((refreshUniverses as any).currentId !== refreshId) {
+      if (refreshIdRef.current !== refreshId) {
         console.log('Refresh cancelled due to newer request');
         return;
       }
-      
+
       // Load pages for each universe in parallel with error handling
       const universesWithPages = await Promise.all(
         universesData.map(async (universe) => {
@@ -72,20 +72,20 @@ export const UniverseDataProvider = ({ children }: { children: React.ReactNode }
           }
         })
       );
-      
+
       // Final check before updating state
-      if ((refreshUniverses as any).currentId !== refreshId) {
+      if (refreshIdRef.current !== refreshId) {
         console.log('State update cancelled due to newer request');
         return;
       }
-      
+
       console.log('Universes with pages:', universesWithPages);
       setUniverses(universesWithPages);
       await saveUniverses(universesWithPages);
     } catch (error) {
       console.error('Failed to fetch universes:', error);
       // Only update state if this is still the current refresh
-      if ((refreshUniverses as any).currentId === refreshId) {
+      if (refreshIdRef.current === refreshId) {
         // Fallback to local storage if database fails
         try {
           const localData = localStorage.getItem('the-architect-universes');
@@ -103,7 +103,7 @@ export const UniverseDataProvider = ({ children }: { children: React.ReactNode }
       }
     } finally {
       // Only update loading state if this is still the current refresh
-      if ((refreshUniverses as any).currentId === refreshId) {
+      if (refreshIdRef.current === refreshId) {
         setLoading(false);
       }
     }

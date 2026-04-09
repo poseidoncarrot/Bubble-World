@@ -1,5 +1,6 @@
 import { Page } from '../types';
 import * as db from '../utils/database';
+import { reorderPages as reorderPagesUtil } from '../utils/reorder';
 
 export class PageService {
   static async createPage(data: {
@@ -49,33 +50,11 @@ export class PageService {
   }
 
   static reorderPages(
-    pages: Page[], 
-    pageId: string, 
-    targetCategory: string | undefined, 
+    pages: Page[],
+    pageId: string,
+    targetCategory: string | undefined,
     newIndex: number
   ): Page[] {
-    // Remove page from its current position
-    const pageIndex = pages.findIndex(p => p.id === pageId);
-    if (pageIndex === -1) return pages;
-    
-    const page = { ...pages[pageIndex], category: targetCategory };
-    const newPages = Array.from(pages);
-    newPages.splice(pageIndex, 1);
-
-    // Find insertion point in overall pages array
-    const targetPages = newPages.filter(p => (p.category || '') === (targetCategory || ''));
-    
-    let globalInsertIndex = newPages.length;
-    
-    if (newIndex < targetPages.length) {
-      const itemAtNewIndex = targetPages[newIndex];
-      globalInsertIndex = newPages.findIndex(p => p.id === itemAtNewIndex.id);
-    } else if (targetPages.length > 0) {
-      const lastItem = targetPages[targetPages.length - 1];
-      globalInsertIndex = newPages.findIndex(p => p.id === lastItem.id) + 1;
-    }
-
-    newPages.splice(globalInsertIndex, 0, page);
-    return newPages;
+    return reorderPagesUtil(pages, pageId, targetCategory, newIndex);
   }
 }

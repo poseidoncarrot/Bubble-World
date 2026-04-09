@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
-import { Universe, Page, Subsection, Connection } from '../types';
+import { Universe, Page, Subsection, Connection, UniverseSettings } from '../types';
+import { DbUniverse, DbPage, DbSubsection, DbConnection } from './database.types';
 
 // Profile operations
 export const getProfile = async (userId: string) => {
@@ -8,7 +9,7 @@ export const getProfile = async (userId: string) => {
     .select('*')
     .eq('id', userId)
     .single();
-  
+
   if (error) throw error;
   return data;
 };
@@ -20,10 +21,48 @@ export const updateProfile = async (userId: string, updates: Partial<{ full_name
     .eq('id', userId)
     .select()
     .single();
-  
+
   if (error) throw error;
   return data;
 };
+
+// Transform functions
+const transformUniverse = (data: DbUniverse): Universe => ({
+  id: data.id,
+  name: data.name,
+  description: data.description || '',
+  icon: data.icon || undefined,
+  pages: [],
+  settings: (data.settings as UniverseSettings) || {},
+  categories: data.categories || []
+});
+
+const transformPage = (data: DbPage): Page => ({
+  id: data.id,
+  title: data.title,
+  description: data.description || '',
+  coverImage: data.cover_image || undefined,
+  subsections: [],
+  connections: [],
+  category: data.category || undefined,
+  position: data.position as { x?: number; y?: number } | undefined
+});
+
+const transformSubsection = (data: DbSubsection): Subsection => ({
+  id: data.id,
+  title: data.title,
+  content: data.content || '',
+  connections: [],
+  position: data.position as { x?: number; y?: number } | undefined
+});
+
+const transformConnection = (data: DbConnection): Connection => ({
+  id: data.id,
+  sourceType: data.source_type,
+  sourceId: data.source_id,
+  targetType: data.target_type,
+  targetId: data.target_id
+});
 
 // Universe operations
 export const getUniverses = async (userId: string): Promise<Universe[]> => {
@@ -32,10 +71,8 @@ export const getUniverses = async (userId: string): Promise<Universe[]> => {
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
-  
+
   if (error) throw error;
-  
-  // Transform database records to Universe type
   return data.map(transformUniverse);
 };
 
@@ -52,7 +89,7 @@ export const createUniverse = async (universe: Omit<Universe, 'id'> & { user_id:
     })
     .select()
     .single();
-  
+
   if (error) throw error;
   return transformUniverse(data);
 };
@@ -70,46 +107,42 @@ export const updateUniverse = async (id: string, updates: Partial<Universe>): Pr
     .eq('id', id)
     .select()
     .single();
-  
+
   if (error) throw error;
   return transformUniverse(data);
 };
 
 export const deleteUniverse = async (id: string): Promise<void> => {
   try {
-    // First, get all pages for this universe
     const { data: pages, error: pagesError } = await supabase
       .from('pages')
       .select('id')
       .eq('universe_id', id);
-    
+
     if (pagesError) throw pagesError;
-    
-    // Delete all subsections for all pages in this universe
+
     if (pages && pages.length > 0) {
       const pageIds = pages.map(page => page.id);
       const { error: subsectionsError } = await supabase
         .from('subsections')
         .delete()
         .in('page_id', pageIds);
-      
+
       if (subsectionsError) throw subsectionsError;
     }
-    
-    // Delete all pages for this universe
+
     const { error: deletePagesError } = await supabase
       .from('pages')
       .delete()
       .eq('universe_id', id);
-    
+
     if (deletePagesError) throw deletePagesError;
-    
-    // Finally, delete the universe
+
     const { error } = await supabase
       .from('universes')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   } catch (error) {
     throw error;
@@ -123,35 +156,33 @@ export const getPages = async (universeId: string): Promise<Page[]> => {
     .select('*')
     .eq('universe_id', universeId)
     .order('created_at', { ascending: true });
-  
+
   if (error) throw error;
-  
-  // Get connections for this universe
+
   const connections = await getConnections(universeId);
-  
-  // Get subsections for each page and add connections
+
   const pagesWithSubsections = await Promise.all(
     data.map(async (page) => {
       const subsections = await getSubsections(page.id);
       const pageConnections = connections
-        .filter(c => c.sourceType === 'page' && c.sourceId === page.id)
-        .map(c => c.targetId);
-      
-      const subsectionsWithConnections = subsections.map(sub => {
+        .filter((c: Connection) => c.sourceType === 'page' && c.sourceId === page.id)
+        .map((c: Connection) => c.targetId);
+
+      const subsectionsWithConnections = subsections.map((sub: Subsection) => {
         const subConnections = connections
-          .filter(c => c.sourceType === 'subsection' && c.sourceId === sub.id)
-          .map(c => c.targetId);
+          .filter((c: Connection) => c.sourceType === 'subsection' && c.sourceId === sub.id)
+          .map((c: Connection) => c.targetId);
         return { ...sub, connections: subConnections };
       });
-      
-      return transformPage({ 
-        ...page, 
+
+      return transformPage({
+        ...page,
         subsections: subsectionsWithConnections,
-        connections: pageConnections 
-      });
+        connections: pageConnections
+      } as DbPage);
     })
   );
-  
+
   return pagesWithSubsections;
 };
 
@@ -168,13 +199,12 @@ export const createPage = async (page: Omit<Page, 'id'> & { universe_id: string 
     })
     .select()
     .single();
-  
+
   if (error) throw error;
-  
-  // Create connections if provided
+
   if (page.connections && page.connections.length > 0) {
     await Promise.all(
-      page.connections.map(targetId => 
+      page.connections.map(targetId =>
         createConnection({
           universe_id: page.universe_id,
           sourceType: 'page',
@@ -185,7 +215,7 @@ export const createPage = async (page: Omit<Page, 'id'> & { universe_id: string 
       )
     );
   }
-  
+
   return transformPage(data);
 };
 
@@ -202,30 +232,26 @@ export const updatePage = async (id: string, updates: Partial<Page>): Promise<Pa
     .eq('id', id)
     .select()
     .single();
-  
+
   if (error) throw error;
-  
-  // Handle connections separately if provided
+
   if (updates.connections !== undefined) {
-    // First, get the universe_id for this page
     const { data: pageData } = await supabase
       .from('pages')
       .select('universe_id')
       .eq('id', id)
       .single();
-    
+
     if (pageData) {
-      // Delete existing connections from this page
       await supabase
         .from('connections')
         .delete()
         .eq('source_type', 'page')
         .eq('source_id', id);
-      
-      // Create new connections
+
       if (updates.connections.length > 0) {
         await Promise.all(
-          updates.connections.map(targetId => 
+          updates.connections.map(targetId =>
             createConnection({
               universe_id: pageData.universe_id,
               sourceType: 'page',
@@ -238,32 +264,29 @@ export const updatePage = async (id: string, updates: Partial<Page>): Promise<Pa
       }
     }
   }
-  
+
   return transformPage(data);
 };
 
 export const deletePage = async (id: string): Promise<void> => {
   try {
-    // First, delete all connections from this page
     await supabase
       .from('connections')
       .delete()
       .or(`(source_type.eq.page AND source_id.eq.${id}) OR (target_type.eq.page AND target_id.eq.${id})`);
-    
-    // Then delete all subsections for this page
+
     const { error: subsectionsError } = await supabase
       .from('subsections')
       .delete()
       .eq('page_id', id);
-    
+
     if (subsectionsError) throw subsectionsError;
-    
-    // Finally delete the page
+
     const { error } = await supabase
       .from('pages')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   } catch (error) {
     throw error;
@@ -277,9 +300,8 @@ export const getSubsections = async (pageId: string): Promise<Subsection[]> => {
     .select('*')
     .eq('page_id', pageId)
     .order('created_at', { ascending: true });
-  
+
   if (error) throw error;
-  
   return data.map(transformSubsection);
 };
 
@@ -294,21 +316,19 @@ export const createSubsection = async (subsection: Omit<Subsection, 'id'> & { pa
     })
     .select()
     .single();
-  
+
   if (error) throw error;
-  
-  // Create connections if provided
+
   if (subsection.connections && subsection.connections.length > 0) {
-    // First, get universe_id for this subsection's page
     const { data: pageData } = await supabase
       .from('pages')
       .select('universe_id')
       .eq('id', subsection.page_id)
       .single();
-    
+
     if (pageData) {
       await Promise.all(
-        subsection.connections.map(targetId => 
+        subsection.connections.map(targetId =>
           createConnection({
             universe_id: pageData.universe_id,
             sourceType: 'subsection',
@@ -320,7 +340,7 @@ export const createSubsection = async (subsection: Omit<Subsection, 'id'> & { pa
       );
     }
   }
-  
+
   return transformSubsection(data);
 };
 
@@ -335,37 +355,33 @@ export const updateSubsection = async (id: string, updates: Partial<Subsection>)
     .eq('id', id)
     .select()
     .single();
-  
+
   if (error) throw error;
-  
-  // Handle connections separately if provided
+
   if (updates.connections !== undefined) {
-    // First, get universe_id for this subsection's page
     const { data: subsectionData } = await supabase
       .from('subsections')
       .select('page_id')
       .eq('id', id)
       .single();
-    
+
     if (subsectionData) {
       const { data: pageData } = await supabase
         .from('pages')
         .select('universe_id')
         .eq('id', subsectionData.page_id)
         .single();
-      
+
       if (pageData) {
-        // Delete existing connections from this subsection
         await supabase
           .from('connections')
           .delete()
           .eq('source_type', 'subsection')
           .eq('source_id', id);
-        
-        // Create new connections
+
         if (updates.connections.length > 0) {
           await Promise.all(
-            updates.connections.map(targetId => 
+            updates.connections.map(targetId =>
               createConnection({
                 universe_id: pageData.universe_id,
                 sourceType: 'subsection',
@@ -379,24 +395,22 @@ export const updateSubsection = async (id: string, updates: Partial<Subsection>)
       }
     }
   }
-  
+
   return transformSubsection(data);
 };
 
 export const deleteSubsection = async (id: string): Promise<void> => {
   try {
-    // First, delete all connections from this subsection
     await supabase
       .from('connections')
       .delete()
       .or(`(source_type.eq.subsection AND source_id.eq.${id}) OR (target_type.eq.subsection AND target_id.eq.${id})`);
-    
-    // Then delete the subsection
+
     const { error } = await supabase
       .from('subsections')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   } catch (error) {
     throw error;
@@ -409,9 +423,8 @@ export const getConnections = async (universeId: string): Promise<Connection[]> 
     .from('connections')
     .select('*')
     .eq('universe_id', universeId);
-  
+
   if (error) throw error;
-  
   return data.map(transformConnection);
 };
 
@@ -427,7 +440,7 @@ export const createConnection = async (connection: Omit<Connection, 'id'> & { un
     })
     .select()
     .single();
-  
+
   if (error) throw error;
   return transformConnection(data);
 };
@@ -437,44 +450,6 @@ export const deleteConnection = async (id: string): Promise<void> => {
     .from('connections')
     .delete()
     .eq('id', id);
-  
+
   if (error) throw error;
 };
-
-// Helper functions to transform database records to app types
-const transformUniverse = (data: any): Universe => ({
-  id: data.id,
-  name: data.name,
-  description: data.description || '',
-  icon: data.icon,
-  pages: [], // Will be loaded separately
-  settings: data.settings || {},
-  categories: data.categories || []
-});
-
-const transformPage = (data: any): Page => ({
-  id: data.id,
-  title: data.title,
-  description: data.description || '',
-  coverImage: data.cover_image,
-  subsections: data.subsections || [],
-  connections: data.connections || [], // Will be provided by getPages
-  category: data.category,
-  position: data.position
-});
-
-const transformSubsection = (data: any): Subsection => ({
-  id: data.id,
-  title: data.title,
-  content: data.content || '',
-  connections: data.connections || [], // Will be provided by getPages
-  position: data.position
-});
-
-const transformConnection = (data: any): Connection => ({
-  id: data.id,
-  sourceType: data.source_type,
-  sourceId: data.source_id,
-  targetType: data.target_type,
-  targetId: data.target_id
-});
