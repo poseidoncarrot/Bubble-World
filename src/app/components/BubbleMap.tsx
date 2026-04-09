@@ -43,6 +43,7 @@ export default function BubbleMap() {
     connectingFrom,
     nodes,
     edges,
+    draggingNode,
     setConnectingFrom,
     setZoom,
     handleWheel,
@@ -50,7 +51,10 @@ export default function BubbleMap() {
     handleMouseMove,
     handleMouseUp,
     handleNodeNavigate,
-    toggleConnectionMode
+    toggleConnectionMode,
+    handleNodeMouseDown,
+    handleNodeMouseMove,
+    handleNodeMouseUp
   } = useBubbleMap(universe, searchQuery);
 
   // Sync local state with universe data when universe changes
@@ -149,12 +153,16 @@ export default function BubbleMap() {
         pan={pan}
         zoom={zoom}
         connectingFrom={connectingFrom}
+        draggingNode={draggingNode}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onNodeClick={handleNodeClick}
         onToggleConnection={toggleConnectionMode}
+        onNodeMouseDown={handleNodeMouseDown}
+        onNodeMouseMove={handleNodeMouseMove}
+        onNodeMouseUp={handleNodeMouseUp}
         onZoomIn={() => zoom < 3 && setZoom(z => z + 0.2)}
         onZoomOut={() => zoom > 0.1 && setZoom(z => z - 0.2)}
         onCancelConnection={() => setConnectingFrom(null)}

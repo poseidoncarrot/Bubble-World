@@ -10,28 +10,46 @@ interface BubbleNodeProps {
     matchesSearch: boolean;
   };
   connectingFrom: { type: 'page' | 'subsection'; id: string } | null;
+  draggingNode: string | null;
   onNodeClick: (node: BubbleNodeProps['node']) => void;
   onToggleConnection: (node: BubbleNodeProps['node']) => void;
+  onNodeMouseDown: (e: React.MouseEvent, nodeId: string) => void;
   universeTheme?: string;
 }
 
 export const BubbleNode = ({ 
   node, 
   connectingFrom, 
+  draggingNode,
   onNodeClick, 
   onToggleConnection,
+  onNodeMouseDown,
   universeTheme 
 }: BubbleNodeProps) => {
   const isDarkTheme = universeTheme === 'Dark';
+  const isDragging = draggingNode === node.id;
   
   return (
     <div 
       key={node.id}
-      className={`absolute top-0 left-0 rounded-full flex flex-col items-center justify-center text-center shadow-lg border-2 transition-all cursor-pointer group ${
+      data-node="true"
+      className={`absolute top-0 left-0 rounded-full flex flex-col items-center justify-center text-center shadow-lg border-2 transition-all cursor-move group ${
         node.type === 'page' ? 'w-32 h-32 bg-white border-[#214059]' : 'w-24 h-24 bg-[#f8f9fa] border-gray-300'
-      } ${!node.matchesSearch ? 'opacity-20' : ''} ${connectingFrom?.id === node.id ? 'ring-4 ring-blue-500' : ''}`}
-      style={{ transform: `translate(${node.x}px, ${node.y}px) translate(-50%, -50%)` }}
-      onClick={(e) => { e.stopPropagation(); onNodeClick(node); }}
+      } ${!node.matchesSearch ? 'opacity-20' : ''} ${connectingFrom?.id === node.id ? 'ring-4 ring-blue-500' : ''} ${isDragging ? 'z-50 scale-110 shadow-2xl' : 'hover:scale-105'}`}
+      style={{ 
+        transform: `translate(${node.x}px, ${node.y}px) translate(-50%, -50%)`,
+        transition: isDragging ? 'none' : 'transform 0.2s'
+      }}
+      onClick={(e) => { 
+        if (!isDragging) {
+          e.stopPropagation(); 
+          onNodeClick(node); 
+        }
+      }}
+      onMouseDown={(e) => { 
+        e.stopPropagation(); 
+        onNodeMouseDown(e, node.id); 
+      }}
     >
       <div className="font-bold text-[12px] text-[#214059] px-2 leading-tight">
         {node.title}

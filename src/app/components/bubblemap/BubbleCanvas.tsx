@@ -21,12 +21,16 @@ interface BubbleCanvasProps {
   pan: { x: number; y: number };
   zoom: number;
   connectingFrom: { type: 'page' | 'subsection'; id: string } | null;
+  draggingNode: string | null;
   onWheel: (e: React.WheelEvent) => void;
   onMouseDown: (e: React.MouseEvent) => void;
   onMouseMove: (e: React.MouseEvent) => void;
   onMouseUp: () => void;
   onNodeClick: (node: any) => void;
   onToggleConnection: (node: any) => void;
+  onNodeMouseDown: (e: React.MouseEvent, nodeId: string) => void;
+  onNodeMouseMove: (e: React.MouseEvent) => void;
+  onNodeMouseUp: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onCancelConnection: () => void;
@@ -39,12 +43,16 @@ export const BubbleCanvas = ({
   pan,
   zoom,
   connectingFrom,
+  draggingNode,
   onWheel,
   onMouseDown,
   onMouseMove,
   onMouseUp,
   onNodeClick,
   onToggleConnection,
+  onNodeMouseDown,
+  onNodeMouseMove,
+  onNodeMouseUp,
   onZoomIn,
   onZoomOut,
   onCancelConnection,
@@ -55,12 +63,12 @@ export const BubbleCanvas = ({
   return (
     <div 
       ref={containerRef}
-      className="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing select-none"
+      className={`flex-1 relative overflow-hidden select-none ${draggingNode ? 'cursor-grabbing' : 'cursor-grab'}`}
       onWheel={onWheel}
       onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
+      onMouseMove={onNodeMouseMove}
+      onMouseUp={onNodeMouseUp}
+      onMouseLeave={onNodeMouseUp}
     >
       <div 
         className="absolute inset-0 origin-center transition-transform duration-75"
@@ -91,8 +99,10 @@ export const BubbleCanvas = ({
             key={node.id}
             node={node}
             connectingFrom={connectingFrom}
+            draggingNode={draggingNode}
             onNodeClick={onNodeClick}
             onToggleConnection={onToggleConnection}
+            onNodeMouseDown={onNodeMouseDown}
             universeTheme={universeTheme}
           />
         ))}

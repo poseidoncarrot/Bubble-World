@@ -25,6 +25,9 @@ export const useBubbleMap = (universe: Universe | undefined, searchQuery: string
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [connectingFrom, setConnectingFrom] = useState<{ type: 'page' | 'subsection', id: string } | null>(null);
+  const [draggingNode, setDraggingNode] = useState<string | null>(null);
+  const [nodeDragStart, setNodeDragStart] = useState({ x: 0, y: 0 });
+  const [nodePositions, setNodePositions] = useState<Map<string, { x: number; y: number }>>(new Map());
 
   // Generate nodes positions (simple layout: circle for pages, ring for subsections)
   const nodes = useMemo((): BubbleNode[] => {
@@ -41,8 +44,13 @@ export const useBubbleMap = (universe: Universe | undefined, searchQuery: string
 
     pages.forEach((page, i) => {
       const angle = (i / pages.length) * 2 * Math.PI;
-      const px = centerX + pageRadius * Math.cos(angle);
-      const py = centerY + pageRadius * Math.sin(angle);
+      const defaultPx = centerX + pageRadius * Math.cos(angle);
+      const defaultPy = centerY + pageRadius * Math.sin(angle);
+      
+      // Use stored position if available, otherwise use default
+      const storedPos = nodePositions.get(page.id);
+      const px = storedPos?.x ?? defaultPx;
+      const py = storedPos?.y ?? defaultPy;
       
       const matchesSearch = lowerQuery === '' || page.title.toLowerCase().includes(lowerQuery);
       
@@ -51,8 +59,13 @@ export const useBubbleMap = (universe: Universe | undefined, searchQuery: string
       page.subsections.forEach((sub, j) => {
         const subAngle = angle + ((j - (page.subsections.length - 1) / 2) * 0.4);
         const subRadius = pageRadius + 200;
-        const sx = centerX + subRadius * Math.cos(subAngle);
-        const sy = centerY + subRadius * Math.sin(subAngle);
+        const defaultSx = centerX + subRadius * Math.cos(subAngle);
+        const defaultSy = centerY + subRadius * Math.sin(subAngle);
+        
+        // Use stored position if available, otherwise use default
+        const storedSubPos = nodePositions.get(sub.id);
+        const sx = storedSubPos?.x ?? defaultSx;
+        const sy = storedSubPos?.y ?? defaultSy;
         
         const subMatchesSearch = lowerQuery === '' || sub.title.toLowerCase().includes(lowerQuery);
         
@@ -60,7 +73,7 @@ export const useBubbleMap = (universe: Universe | undefined, searchQuery: string
       });
     });
     return items;
-  }, [universe, searchQuery]);
+  }, [universe, searchQuery, nodePositions]);
 
   // Extract edges
   const edges = useMemo((): BubbleEdge[] => {
@@ -156,6 +169,90 @@ export const useBubbleMap = (universe: Universe | undefined, searchQuery: string
     }
   }, [connectingFrom]);
 
+  const handleNodeMouseDown = useCallback((e: React.MouseEvent, nodeId: string) => {
+    e.stopPropagation();
+    console.log('Mouse down on node:', nodeId);
+    setDraggingNode(nodeId);
+    const node = nodes.find(n => n.id === nodeId);
+    if (node) {
+      // Store the initial mouse position relative to the node's current position
+      const nodeScreenX = node.x * zoom + pan.x;
+      const nodeScreenY = node.y * zoom + pan.y;
+      const dragOffsetX = e.clientX - nodeScreenX;
+      const dragOffsetY = e.clientY - nodeScreenY;
+      console.log('Node position:', { x: node.x, y: node.y });
+      console.log('Drag offset:', { x: dragOffsetX, y: dragOffsetY });
+      setNodeDragStart({ x: dragOffsetX, y: dragOffsetY });
+    }
+  }, [nodes, zoom, pan]);
+
+  const handleNodeMouseMove = useCallback((e: React.MouseEvent) => {
+    if (draggingNode) {
+      console.log('Mouse move - dragging node:', draggingNode);
+      console.log('Mouse position:', { x: e.clientX, y: e.clientY });
+      console.log('Drag start offset:', nodeDragStart);
+      console.log('Pan and zoom:', { pan, zoom });
+      
+      let newX = (e.clientX - nodeDragStart.x - pan.x) / zoom;
+      let newY = (e.clientY - nodeDragStart.y - pan.y) / zoom;
+      
+      console.log('Calculated new position:', { x: newX, y: newY });
+      
+      // Apply gentle distance constraints for connected bubbles
+      const draggingNodeData = nodes.find(n => n.id === draggingNode);
+      if (draggingNodeData && universe) {
+        const minDistance = 120; // Minimum distance between connected bubbles
+        
+        // Get all connections for the dragging node
+        let allConnections: string[] = [];
+        
+        // Check page connections
+        const page = universe.pages.find(p => p.id === draggingNode);
+        if (page) {
+          allConnections = allConnections.concat(page.connections);
+        }
+        
+        // Check subsection connections
+        universe.pages.forEach(p => {
+          const subsection = p.subsections.find(s => s.id === draggingNode);
+          if (subsection) {
+            allConnections = allConnections.concat(subsection.connections);
+          }
+        });
+        
+        // Apply minimum distance constraint (only prevent overlap)
+        allConnections.forEach(connectedId => {
+          const connectedNode = nodes.find(n => n.id === connectedId);
+          if (connectedNode) {
+            const currentPos = nodePositions.get(connectedId) || { x: connectedNode.x, y: connectedNode.y };
+            const dx = newX - currentPos.x;
+            const dy = newY - currentPos.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Only apply minimum distance to prevent overlap
+            if (distance < minDistance && distance > 0) {
+              const angle = Math.atan2(dy, dx);
+              newX = currentPos.x + minDistance * Math.cos(angle);
+              newY = currentPos.y + minDistance * Math.sin(angle);
+            }
+          }
+        });
+      }
+      
+      console.log('Setting node position:', { nodeId: draggingNode, x: newX, y: newY });
+      setNodePositions(prev => {
+        const newPositions = new Map(prev);
+        newPositions.set(draggingNode, { x: newX, y: newY });
+        console.log('Updated positions:', newPositions);
+        return newPositions;
+      });
+    }
+  }, [draggingNode, nodeDragStart, pan, zoom, nodes, universe, nodePositions]);
+
+  const handleNodeMouseUp = useCallback(() => {
+    setDraggingNode(null);
+  }, []);
+
   return {
     // State
     pan,
@@ -164,6 +261,7 @@ export const useBubbleMap = (universe: Universe | undefined, searchQuery: string
     connectingFrom,
     nodes,
     edges,
+    draggingNode,
     
     // Actions
     setPan,
@@ -174,6 +272,9 @@ export const useBubbleMap = (universe: Universe | undefined, searchQuery: string
     handleMouseMove,
     handleMouseUp,
     handleNodeNavigate,
-    toggleConnectionMode
+    toggleConnectionMode,
+    handleNodeMouseDown,
+    handleNodeMouseMove,
+    handleNodeMouseUp
   };
 };
