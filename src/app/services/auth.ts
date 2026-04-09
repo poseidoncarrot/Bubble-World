@@ -17,6 +17,7 @@ export interface SignUpData {
 export const authService = {
   async signUp(email: string, password: string, firstName: string, lastName: string): Promise<AuthResponse> {
     const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+    const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
     
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -27,7 +28,7 @@ export const authService = {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
         },
-        emailRedirectTo: `${window.location.origin}/login`
+        emailRedirectTo: `${appUrl}/login`
       }
     });
     
@@ -64,11 +65,12 @@ export const authService = {
   },
 
   async resendConfirmationEmail(email: string): Promise<{ error: any }> {
+    const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/login`
+        emailRedirectTo: `${appUrl}/login`
       }
     });
     
@@ -97,8 +99,9 @@ export const authService = {
 
   // Password reset functionality
   async resetPassword(email: string): Promise<{ error: any }> {
+    const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`
+      redirectTo: `${appUrl}/reset-password`
     });
     
     return { error };
