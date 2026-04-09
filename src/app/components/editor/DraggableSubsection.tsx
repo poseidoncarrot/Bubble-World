@@ -97,6 +97,7 @@ export const DraggableSubsection = ({
         key={sub.id}
         content={sub.content}
         onChange={(val) => updateSubsection(universe.id, currentPage.id, sub.id, { content: val })}
+        theme={universe.settings?.theme || 'Light (Default)'}
       />
       
       {/* Connections Section within Subsection */}
