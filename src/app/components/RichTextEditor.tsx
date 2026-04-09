@@ -1,3 +1,29 @@
+/**
+ * RichTextEditor component - WYSIWYG text editor with formatting options
+ * 
+ * This component provides a rich text editing experience with:
+ * - Bold and italic formatting
+ * - Heading styles (H1, H2, Normal)
+ * - Text color selection
+ * - Theme support (Light, Dark, Parchment)
+ * - Debounced input to prevent rapid updates
+ * - Content preservation during re-renders
+ * 
+ * Technical Implementation:
+ * - Uses contentEditable div for editing (not deprecated execCommand)
+ * - Memoized EditorDiv component to prevent unnecessary re-renders
+ * - Ref-based callbacks to avoid stale closure issues
+ * - Debounced input handler (150ms) for performance
+ * - Theme-aware styling for all UI elements
+ * 
+ * TODO: Replace execCommand with modern alternatives (Slate.js, ProseMirror)
+ * TODO: Add undo/redo functionality
+ * TODO: Add list formatting (bullets, numbered)
+ * TODO: Add link insertion
+ * TODO: Add image insertion
+ * TODO: Add keyboard shortcuts (Cmd+B, Cmd+I, etc.)
+ */
+
 import { useRef, useEffect, memo, useCallback } from 'react';
 import React from 'react';
 import { Bold, Italic } from 'lucide-react';
@@ -11,6 +37,15 @@ interface EditorDivProps {
   theme: string;
 }
 
+/**
+ * EditorDiv - Memoized content editable div component
+ * 
+ * This component is memoized with a custom comparison function that
+ * always returns true, meaning it never re-renders based on props.
+ * This is intentional because we update the content via refs instead.
+ * 
+ * The contentEditable div provides the actual editing surface.
+ */
 const EditorDiv = memo(({ initialContent, onInput, onBlur, innerRef, theme }: EditorDivProps) => {
   const getThemeClasses = () => {
     if (theme === 'Dark') {

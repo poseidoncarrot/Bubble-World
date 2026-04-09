@@ -1,3 +1,31 @@
+/**
+ * Button component - Reusable button with multiple variants and states
+ * 
+ * This component provides a flexible button component with:
+ * - Multiple variants (primary, secondary, danger, ghost)
+ * - Multiple sizes (sm, md, lg)
+ * - Icon support (left or right position)
+ * - Loading state with spinner
+ * - Full width option
+ * - Disabled state handling
+ * 
+ * Design System:
+ * - Primary: Gradient background (brand colors)
+ * - Secondary: Gray background
+ * - Danger: Red for destructive actions
+ * - Ghost: Transparent with hover effect
+ * 
+ * Accessibility:
+ * - Focus ring for keyboard navigation
+ * - Disabled state prevents interaction
+ * - Loading state disables button
+ * 
+ * TODO: Add icon-only variant
+ * TODO: Add ripple effect on click
+ * TODO: Add tooltip support
+ * TODO: Add link variant (renders as <a>)
+ */
+
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 

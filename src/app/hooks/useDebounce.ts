@@ -1,3 +1,27 @@
+/**
+ * useDebounce - Custom hook for debouncing function calls
+ * 
+ * This hook provides two debounce utilities:
+ * 1. useDebounce: Simple debounce for a single callback
+ * 2. useDebouncedUpdate: Key-based debounce for multiple callbacks
+ * 
+ * useDebounce:
+ * - Delays function execution until after specified delay
+ * - Cancels previous pending calls on new invocation
+ * - Preserves function type and parameters
+ * - Common use: Debouncing search inputs, text fields
+ * 
+ * useDebouncedUpdate:
+ * - Manages multiple debounced callbacks by key
+ * - Each key has its own independent timer
+ * - Useful for debouncing updates to different items
+ * - Common use: Debouncing updates to multiple form fields
+ * 
+ * TODO: Add cancel function to useDebounce
+ * TODO: Add leading edge option (execute on first call)
+ * TODO: Add max wait option (execute after max wait even if still called)
+ */
+
 import { useMemo } from 'react';
 
 export const useDebounce = <T extends (...args: any[]) => any>(

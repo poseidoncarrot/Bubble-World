@@ -1,3 +1,31 @@
+/**
+ * useInactivityTracker - Custom hook for inactivity tracking and auto-logout
+ * 
+ * This hook monitors user activity and automatically logs out inactive users:
+ * - Tracks mouse, keyboard, and touch events
+ * - Auto-logout after 5 minutes of inactivity
+ * - Persists activity state to localStorage across tab reloads
+ * - Shows warning 30 seconds before logout
+ * - Throttles high-frequency events for performance
+ * - Handles tab visibility changes
+ * 
+ * Features:
+ * - Activity tracking: Monitors user interactions
+ * - Persistence: Survives page reloads via localStorage
+ * - Warning system: Console warning before logout
+ * - Performance: Throttles mousemove and scroll events
+ * - Cleanup: Properly removes event listeners on unmount
+ * 
+ * Timeout Configuration:
+ * - INACTIVITY_TIMEOUT: 5 minutes before logout
+ * - Warning: 30 seconds before logout
+ * - Throttle: 1 second for high-frequency events
+ * 
+ * TODO: Add visual warning modal instead of console
+ * TODO: Add configurable timeout duration
+ * TODO: Add "stay logged in" button in warning modal
+ */
+
 import { useCallback, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 

@@ -1,3 +1,32 @@
+/**
+ * UniverseDataContext - Context for universe data management
+ * 
+ * This context manages the data layer for universes:
+ * - Fetches universes from Supabase database
+ * - Caches universes in localStorage for offline support
+ * - Prevents race conditions with refresh ID tracking
+ * - Handles page loading for each universe
+ * - Provides fallback to localStorage on database errors
+ * 
+ * Features:
+ * - Automatic refresh on session changes
+ * - Parallel page loading for better performance
+ * - LocalStorage persistence for offline access
+ * - Race condition prevention with refresh IDs
+ * - Error handling with graceful fallbacks
+ * 
+ * Data Flow:
+ * 1. User logs in → refreshUniverses() called
+ * 2. Fetch universes from database
+ * 3. Load pages for each universe in parallel
+ * 4. Save to localStorage
+ * 5. Update state
+ * 
+ * TODO: Add optimistic updates
+ * TODO: Add real-time sync with Supabase
+ * TODO: Add conflict resolution for concurrent edits
+ */
+
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import * as db from '../utils/database';

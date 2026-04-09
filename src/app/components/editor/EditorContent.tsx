@@ -1,3 +1,28 @@
+/**
+ * EditorContent component - Main content area for editing pages
+ * 
+ * This component displays the editable content of a selected page:
+ * - Cover image with upload functionality
+ * - Page title (editable with debounced updates)
+ * - Page description (editable with debounced updates)
+ * - Page connections (links to other pages/subsections)
+ * - List of draggable subsections
+ * - Add subsection button
+ * 
+ * Features:
+ * - Debounced title and description updates (500ms)
+ * - Cover image upload via file input
+ * - Connection management (add/remove links)
+ * - Theme-aware styling
+ * - Empty state when no page is selected
+ * 
+ * TODO: Add page metadata (word count, reading time)
+ * TODO: Add page version history
+ * TODO: Add page templates
+ * TODO: Add collaborative editing indicators
+ * TODO: Add keyboard shortcuts
+ */
+
 import React, { useCallback } from 'react';
 import { Plus, Link as LinkIcon, ImageIcon, Upload, X } from 'lucide-react';
 import { Page, Universe } from '../../types';

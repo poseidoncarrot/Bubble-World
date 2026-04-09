@@ -1,3 +1,35 @@
+/**
+ * usePageOperations - Custom hook for page-level CRUD operations
+ * 
+ * This hook provides operations for managing pages:
+ * - Create new pages
+ * - Update page content and metadata
+ * - Delete pages
+ * - Reorder pages within categories
+ * - Reorder subsections within pages
+ * 
+ * Operations:
+ * - createPage: Creates a new page in a universe
+ * - updatePage: Updates page properties (title, description, connections, etc.)
+ * - deletePage: Removes a page from the universe
+ * - reorderPages: Changes page order or moves between categories
+ * - reorderSubsections: Reorders subsections within a page
+ * 
+ * Reordering:
+ * - Pages can be reordered within the same category
+ * - Pages can be moved between categories
+ * - Subsections can be reordered within their parent page
+ * 
+ * Data Flow:
+ * 1. Operation calls database function
+ * 2. Updates local state via useUniverseData
+ * 3. Saves to localStorage for persistence
+ * 
+ * TODO: Add page duplication
+ * TODO: Add page templates
+ * TODO: Add page version history
+ */
+
 import { useCallback } from 'react';
 import { useUniverseData } from '../contexts/UniverseDataContext';
 import { Page } from '../types';

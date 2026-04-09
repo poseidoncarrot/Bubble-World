@@ -1,3 +1,20 @@
+-- Supabase Database Schema for Bubble World
+-- 
+-- This schema defines the database structure for the application:
+-- - User profiles with additional metadata
+-- - Universes (worlds) owned by users
+-- - Pages within universes
+-- - Subsections within pages
+-- - Connections between pages and subsections
+-- 
+-- Security:
+-- - Row Level Security (RLS) enabled on all tables
+-- - Users can only access their own data
+-- - Cascade deletes for data integrity
+-- 
+-- Extensions:
+-- - uuid-ossp: UUID generation for primary keys
+
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 

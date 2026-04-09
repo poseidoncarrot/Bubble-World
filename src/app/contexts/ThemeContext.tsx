@@ -1,3 +1,33 @@
+/**
+ * ThemeContext - Theme management for the application
+ * 
+ * This context manages the visual theme for the application:
+ * - Supports three themes: Light (Default), Dark, Parchment
+ * - Provides theme class utilities for consistent styling
+ * - Syncs with universe settings
+ * 
+ * Themes:
+ * - Light (Default): Clean, modern light theme
+ * - Dark: Dark mode for low-light environments
+ * - Parchment: Warm, paper-like aesthetic
+ * 
+ * Theme Classes:
+ * - background: Main page background
+ * - surface: Card/panel backgrounds
+ * - text: Primary text color
+ * - textSecondary: Secondary/muted text
+ * - border: Border colors
+ * 
+ * Usage:
+ * - Use useTheme() to access current theme and utilities
+ * - Call getThemeClasses() to get Tailwind-compatible color values
+ * - Call setTheme() to change the theme
+ * 
+ * TODO: Add system theme detection
+ * TODO: Add custom theme support
+ * TODO: Persist theme preference to localStorage
+ */
+
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { Universe } from '../types';
 

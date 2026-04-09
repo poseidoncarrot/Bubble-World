@@ -1,3 +1,31 @@
+/**
+ * useSubsectionOperations - Custom hook for subsection CRUD operations
+ * 
+ * This hook provides operations for managing subsections:
+ * - Create new subsections
+ * - Update subsection content and metadata
+ * - Delete subsections
+ * 
+ * Operations:
+ * - createSubsection: Creates a new subsection within a page
+ * - updateSubsection: Updates subsection properties (title, content, connections)
+ * - deleteSubsection: Removes a subsection from its parent page
+ * 
+ * Subsection Features:
+ * - Rich text content with formatting
+ * - Connections to other pages and subsections
+ * - Position within page (for ordering)
+ * 
+ * Data Flow:
+ * 1. Operation calls database function
+ * 2. Updates local state via useUniverseData
+ * 3. Saves to localStorage for persistence
+ * 
+ * TODO: Add subsection duplication
+ * TODO: Add subsection templates
+ * TODO: Add subsection version history
+ */
+
 import { useCallback } from 'react';
 import { useUniverseData } from '../contexts/UniverseDataContext';
 import { Subsection } from '../types';

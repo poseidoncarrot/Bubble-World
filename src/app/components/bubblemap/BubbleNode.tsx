@@ -1,3 +1,33 @@
+/**
+ * BubbleNode component - Individual node in the bubble map
+ * 
+ * This component represents a single node (page or subsection) in the visual map:
+ * - Displays as a circular bubble with title
+ * - Can be dragged to reposition
+ * - Can be clicked to navigate to editor
+ * - Can be connected to other nodes
+ * - Shows visual feedback during drag and connection mode
+ * - Different sizes for pages vs subsections
+ * - Search highlighting (dimmed if not matching)
+ * 
+ * Visual States:
+ * - Normal: White/light background with border
+ * - Hover: Slight scale increase
+ * - Dragging: Scale up, shadow increase, z-index boost
+ * - Connecting: Blue ring highlight
+ * - Search mismatch: 20% opacity
+ * 
+ * Actions:
+ * - Click: Navigate to node in editor
+ * - Drag: Reposition node on canvas
+ * - Link button: Enter/exit connection mode
+ * 
+ * TODO: Add node icons based on type
+ * TODO: Add node color coding
+ * TODO: Add connection count badge
+ * TODO: Add node preview on hover
+ */
+
 import { Link as LinkIcon, X } from 'lucide-react';
 
 interface BubbleNodeProps {

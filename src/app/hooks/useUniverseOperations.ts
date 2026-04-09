@@ -1,3 +1,34 @@
+/**
+ * useUniverseOperations - Custom hook for universe-level CRUD operations
+ * 
+ * This hook provides operations for managing universes:
+ * - Create new universes
+ * - Update universe metadata
+ * - Delete universes
+ * - Reorder universes in the dashboard
+ * 
+ * Operations:
+ * - createUniverse: Creates a new universe with default settings
+ * - updateUniverse: Updates universe properties (name, description, icon, settings)
+ * - deleteUniverse: Deletes a universe and all its data
+ * - reorderUniverses: Changes the display order of universes
+ * 
+ * Data Flow:
+ * 1. Operation calls database function
+ * 2. Updates local state via useUniverseData
+ * 3. Saves to localStorage for persistence
+ * 4. Returns result or throws error
+ * 
+ * Default Settings:
+ * - Theme: Light (Default)
+ * - Font: Sans Serif (Modern)
+ * - Color: #214059 (brand blue)
+ * 
+ * TODO: Add universe duplication
+ * TODO: Add universe export/import
+ * TODO: Add universe templates
+ */
+
 import { useCallback } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { useUniverseData } from '../contexts/UniverseDataContext';

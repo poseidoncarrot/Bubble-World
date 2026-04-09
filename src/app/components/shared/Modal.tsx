@@ -1,3 +1,35 @@
+/**
+ * Modal component - Reusable modal dialog with sub-components
+ * 
+ * This component provides a flexible modal system with:
+ * - Modal container with backdrop blur
+ * - ModalHeader with title and close button
+ * - ModalBody for content
+ * - ModalFooter for action buttons
+ * - Conditional rendering based on isOpen
+ * - Custom className support
+ * 
+ * Features:
+ * - Fixed positioning with z-index for layering
+ * - Backdrop blur for focus
+ * - Centered content
+ * - Responsive max-width
+ * - Accessible close button
+ * 
+ * Usage Pattern:
+ * <Modal isOpen={show} onClose={close}>
+ *   <ModalHeader title="Title" onClose={close} />
+ *   <ModalBody>Content</ModalBody>
+ *   <ModalFooter>Actions</ModalFooter>
+ * </Modal>
+ * 
+ * TODO: Add animation on open/close
+ * TODO: Add size variants (sm, md, lg, xl)
+ * TODO: Add escape key to close
+ * TODO: Add click outside to close
+ * TODO: Add aria attributes for accessibility
+ */
+
 import React from 'react';
 import { X } from 'lucide-react';
 
@@ -8,6 +40,12 @@ interface ModalProps {
   className?: string;
 }
 
+/**
+ * Modal - Main container component
+ * 
+ * Renders nothing when isOpen is false.
+ * When open, displays a backdrop overlay with centered content.
+ */
 export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, className = "" }) => {
   if (!isOpen) return null;
 
@@ -20,6 +58,12 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, classNa
   );
 };
 
+/**
+ * ModalHeader - Header section with title and close button
+ * 
+ * Displays the modal title and an X button to close the modal.
+ * The close button calls the onClose callback.
+ */
 interface ModalHeaderProps {
   title: string;
   onClose: () => void;
@@ -36,6 +80,11 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({ title, onClose }) => {
   );
 };
 
+/**
+ * ModalBody - Main content section
+ * 
+ * Wraps the modal content with bottom margin for spacing.
+ */
 interface ModalBodyProps {
   children: React.ReactNode;
 }
@@ -44,6 +93,12 @@ export const ModalBody: React.FC<ModalBodyProps> = ({ children }) => {
   return <div className="mb-4">{children}</div>;
 };
 
+/**
+ * ModalFooter - Action buttons section
+ * 
+ * Displays action buttons (e.g., Cancel, Confirm) with right alignment.
+ * Uses flexbox with gap for consistent button spacing.
+ */
 interface ModalFooterProps {
   children: React.ReactNode;
 }

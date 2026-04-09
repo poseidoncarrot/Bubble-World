@@ -1,3 +1,29 @@
+/**
+ * ImageWithFallback component - Image component with error handling
+ * 
+ * This component wraps standard img elements with error handling:
+ * - Displays a fallback image when the source fails to load
+ * - Shows a broken image icon (SVG) as the fallback
+ * - Preserves original image styling and props
+ * - Stores original URL in data attribute for debugging
+ * 
+ * Use Cases:
+ * - User-uploaded images that may be deleted
+ * - External URLs that may be unavailable
+ * - Network issues preventing image load
+ * 
+ * Technical Details:
+ * - Uses onError event to detect load failures
+ * - Switches to fallback state on error
+ * - Fallback is a base64-encoded SVG of a broken image icon
+ * - Maintains all original img props (className, style, etc.)
+ * 
+ * TODO: Add retry functionality
+ * TODO: Add loading skeleton while image loads
+ * TODO: Support custom fallback components
+ * TODO: Add alt text for fallback image
+ */
+
 import React, { useState } from 'react'
 
 const ERROR_IMG_SRC =

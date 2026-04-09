@@ -1,5 +1,28 @@
 -- Supabase Storage Setup for Universe Icons
--- Run this script in your Supabase SQL Editor to set up the storage bucket and policies
+-- 
+-- This script sets up a storage bucket for user-uploaded universe icons:
+-- - Creates a public storage bucket for icons
+-- - Configures file size limit (5MB)
+-- - Restricts to image types (JPEG, PNG, WebP)
+-- - Sets up Row Level Security (RLS) policies
+-- - Organizes files by user ID in folder structure
+-- 
+-- File Organization:
+-- - Files stored as: {user_id}/{filename}
+-- - Each user has their own folder
+-- - Public read access for displaying icons
+-- - Authenticated write access for uploads
+-- 
+-- Security:
+-- - Users can only access their own icons
+-- - Public can read icons (for display)
+-- - File size limit prevents abuse
+-- - MIME type restriction ensures valid images
+--
+-- Usage:
+-- - Run this script in Supabase SQL Editor
+-- - Must be run after schema.sql
+-- - Only needs to be run once per project
 
 -- Create universe-icons storage bucket
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

@@ -1,3 +1,30 @@
+/**
+ * Editor component - Main interface for editing universe content
+ * 
+ * This component provides a comprehensive editor for managing universe content:
+ * - Page management (create, edit, delete, reorder)
+ * - Category management (organize pages into groups)
+ * - Subsection management within pages
+ * - Rich text editing for content
+ * - Page connections (link pages together)
+ * - Cover image upload
+ * - Theme switching (Light, Dark, Parchment)
+ * - Universe settings
+ * 
+ * Architecture:
+ * - Uses UniverseContext for data and operations
+ * - PageSidebar for navigation and page management
+ * - Debounced updates to prevent rapid-fire API calls
+ * - Drag-and-drop for reordering pages and subsections
+ * - RichTextEditor for content editing
+ * 
+ * TODO: Add autosave with visual indicator
+ * TODO: Implement collaborative editing
+ * TODO: Add version history
+ * TODO: Add export functionality (PDF, Markdown)
+ * TODO: Add keyboard shortcuts
+ */
+
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, Link as LinkIcon, Image as ImageIcon, Upload, X, Settings } from 'lucide-react';

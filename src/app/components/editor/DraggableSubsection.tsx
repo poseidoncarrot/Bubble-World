@@ -1,3 +1,32 @@
+/**
+ * DraggableSubsection component - Editable subsection with drag-and-drop
+ * 
+ * This component represents a subsection within a page that can:
+ * - Be dragged to reorder within the page
+ * - Have its title and content edited
+ * - Display rich text content with formatting
+ * - Connect to other pages and subsections
+ * - Be deleted via trash icon
+ * - Show connections to other content
+ * 
+ * Features:
+ * - Debounced title and content updates (500ms)
+ * - Rich text editor for content
+ * - Connection management (add/remove links)
+ * - Visual feedback during drag
+ * - Theme-aware styling
+ * 
+ * Drag-and-Drop Logic:
+ * - Uses react-dnd for reordering
+ * - Hover threshold determines swap timing
+ * - Updates index during drag
+ * 
+ * TODO: Add subsection templates
+ * TODO: Add subsection duplication
+ * TODO: Add collapsible subsections
+ * TODO: Add subsection icons
+ */
+
 import { useRef, useCallback } from 'react';
 import { Trash2, GripVertical, Link as LinkIcon, X } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';

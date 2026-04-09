@@ -1,3 +1,32 @@
+/**
+ * reorder.ts - Reorder utilities for drag-and-drop functionality
+ * 
+ * This module provides utility functions for reordering items:
+ * - reorderPages: Reorder pages within/between categories
+ * - reorderUniverses: Reorder universes in dashboard
+ * - reorderSubsections: Reorder subsections within a page
+ * 
+ * reorderPages:
+ * - Handles moving pages between categories
+ * - Calculates correct insertion index in global array
+ * - Preserves page order within categories
+ * - Used by drag-and-drop in PageSidebar
+ * 
+ * reorderUniverses & reorderSubsections:
+ * - Generic array reordering using splice
+ * - Moves item from startIndex to endIndex
+ * - Used by drag-and-drop in dashboard and editor
+ * 
+ * Algorithm:
+ * 1. Remove item from current position
+ * 2. Calculate new insertion point
+ * 3. Insert at new position
+ * 4. Return new array
+ * 
+ * TODO: Add support for reordering multiple items
+ * TODO: Add undo/redo support
+ */
+
 import { Page } from '../types';
 
 /**

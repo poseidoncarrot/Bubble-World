@@ -1,3 +1,29 @@
+/**
+ * Login/Register/Confirmation component for user authentication
+ * 
+ * This component handles three authentication views:
+ * 1. Login - Existing users sign in with email/password
+ * 2. Register - New users create an account with email, password, and name
+ * 3. Confirm - Users enter email confirmation code to activate account
+ * 
+ * Authentication Flow:
+ * - Registration → Email confirmation required → Login
+ * - Login → Direct access if email already confirmed
+ * - Forgot Password → Separate route (ForgotPassword component)
+ * 
+ * Security Features:
+ * - Email validation using regex
+ * - Password minimum length (6 characters)
+ * - Password confirmation matching
+ * - Email enumeration protection via Supabase
+ * - Session management via AuthContext
+ * 
+ * TODO: Add social login options (Google, GitHub, etc.)
+ * TODO: Implement "remember me" functionality
+ * TODO: Add password strength indicator
+ * TODO: Implement rate limiting for login attempts
+ */
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';

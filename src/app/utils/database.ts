@@ -1,3 +1,33 @@
+/**
+ * database.ts - Supabase database operations
+ * 
+ * This module provides CRUD operations for the Supabase database:
+ * - Profile operations (get, update)
+ * - Universe operations (get, create, update, delete)
+ * - Page operations (get, create, update, delete)
+ * - Subsection operations (get, create, update, delete)
+ * - Connection operations (get, create, delete)
+ * 
+ * Transform Functions:
+ * - Convert database schema types to application types
+ * - Handle null/undefined values appropriately
+ * - Transform snake_case to camelCase
+ * 
+ * Delete Operations:
+ * - Cascade delete to handle foreign key constraints
+ * - Delete connections before parent entities
+ * - Delete subsections before pages
+ * 
+ * Connection Management:
+ * - Stored in separate connections table
+ * - Links pages/subsections to other pages/subsections
+ * - Automatically loaded when fetching pages/subsections
+ * 
+ * TODO: Add query batching for better performance
+ * TODO: Add retry logic for failed operations
+ * TODO: Add optimistic updates
+ */
+
 import { supabase } from './supabase';
 import { Universe, Page, Subsection, Connection, UniverseSettings } from '../types';
 import { DbUniverse, DbPage, DbSubsection, DbConnection } from './database.types';

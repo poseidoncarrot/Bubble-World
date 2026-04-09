@@ -1,3 +1,36 @@
+/**
+ * BubbleMap component - Visual node-based interface for universe content
+ * 
+ * This component provides an alternative view of universe content as interconnected nodes:
+ * - Pages and subsections displayed as bubbles/nodes
+ * - Visual connections between related content
+ * - Pan and zoom canvas for navigation
+ * - Drag nodes to reposition them
+ * - Connection mode to link nodes together
+ * - Search and filter functionality
+ * - Theme support (Light, Dark, Parchment)
+ * 
+ * Key Features:
+ * - Interactive canvas with pan/zoom
+ * - Visual representation of page connections
+ * - Drag-and-drop node positioning
+ * - Click to navigate to editor
+ * - Connection mode for creating links
+ * - Search to filter nodes
+ * 
+ * Architecture:
+ * - useBubbleMap hook for canvas logic (pan, zoom, drag)
+ * - BubbleSidebar for node list and navigation
+ * - BubbleCanvas for the interactive visualization
+ * - Debounced updates for performance
+ * 
+ * TODO: Add auto-layout algorithms
+ * TODO: Implement node grouping/clustering
+ * TODO: Add mini-map for navigation
+ * TODO: Export as image/PDF
+ * TODO: Add animation for node movements
+ */
+
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';

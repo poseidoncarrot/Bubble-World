@@ -1,3 +1,26 @@
+/**
+ * DraggablePage component - Individual page item with drag-and-drop support
+ * 
+ * This component represents a single page in the sidebar that can:
+ * - Be clicked to select and navigate to the page
+ * - Be dragged to reorder within the same category
+ * - Be dragged to move between categories
+ * - Show visual feedback when selected or hovering
+ * - Display "match" badge when search query matches subsection content
+ * - Be deleted via trash icon
+ * 
+ * Drag-and-Drop Logic:
+ * - Uses react-dnd with HTML5 backend
+ * - Calculates hover threshold (middle of item) to determine when to swap
+ * - Only swaps when mouse crosses the midpoint
+ * - Supports both intra-category and inter-category moves
+ * - Updates item index and category during drag
+ * 
+ * TODO: Add keyboard support for selection
+ * TODO: Add page preview on hover
+ * TODO: Add page metadata display (word count, last edited)
+ */
+
 import { useRef } from 'react';
 import { Trash2, GripVertical } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';

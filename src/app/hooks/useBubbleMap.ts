@@ -1,3 +1,34 @@
+/**
+ * useBubbleMap - Custom hook for bubble map canvas interactions
+ * 
+ * This hook manages the visual bubble map interface with:
+ * - Pan and zoom functionality
+ * - Node positioning and dragging
+ * - Connection mode for linking nodes
+ * - Search filtering
+ * - Edge rendering (hierarchy and connections)
+ * - Distance constraints between connected nodes
+ * 
+ * Features:
+ * - Pan via mouse drag or scroll
+ * - Zoom via Ctrl/Cmd + scroll
+ * - Drag nodes to reposition
+ * - Connection mode for linking nodes
+ * - Search highlights matching nodes
+ * - Gentle distance constraints prevent overlap
+ * - Position persistence during re-renders
+ * 
+ * Layout Algorithm:
+ * - Pages arranged in a circle around center
+ * - Subsections arranged in a ring around parent page
+ * - Positions can be overridden by user dragging
+ * 
+ * TODO: Implement auto-layout algorithm (force-directed)
+ * TODO: Add mini-map for navigation
+ * TODO: Add fit-to-screen functionality
+ * TODO: Add keyboard shortcuts for navigation
+ */
+
 import { useMemo, useState, useCallback } from 'react';
 import { Universe } from '../types';
 

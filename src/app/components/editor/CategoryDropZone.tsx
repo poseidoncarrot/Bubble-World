@@ -1,3 +1,28 @@
+/**
+ * CategoryDropZone component - Drop zone for category-based page organization
+ * 
+ * This component wraps page lists to enable drag-and-drop between categories:
+ * - Accepts dropped pages from other categories
+ * - Provides visual feedback when hovering with a dragged page
+ * - Handles the drop logic to move pages between categories
+ * - Styles differently for "Uncategorized" vs named categories
+ * 
+ * Features:
+ * - Visual highlight when page is dragged over
+ * - Moves pages to position 0 when dropped in a category
+ * - Left border indentation for named categories
+ * - Theme-aware styling
+ * 
+ * Drop Logic:
+ * - When a page is dropped, it's moved to the target category
+ * - Page is placed at the top of the category (index 0)
+ * - Category is updated in the page's data
+ * 
+ * TODO: Add drop position indicator (above/below)
+ * TODO: Add animation when page is dropped
+ * TODO: Show page count in category header
+ */
+
 import { useRef, ReactNode } from 'react';
 import { useDrop } from 'react-dnd';
 import { Universe } from '../../types';

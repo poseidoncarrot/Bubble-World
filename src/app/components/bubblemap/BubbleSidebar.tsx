@@ -1,3 +1,33 @@
+/**
+ * BubbleSidebar component - Navigation sidebar for bubble map view
+ * 
+ * This component provides the left sidebar in the bubble map with:
+ * - Universe header with icon and description
+ * - Navigation tabs (Editor/Map)
+ * - Search functionality for nodes
+ * - Category-based node organization
+ * - Node navigation (click to pan to node on canvas)
+ * - Category management (delete)
+ * - Theme-aware styling
+ * 
+ * Features:
+ * - Expandable/collapsible categories
+ * - Search filters nodes by title
+ * - Click node to pan canvas to that node
+ * - "Uncategorized" section for nodes without categories
+ * - Visual feedback during navigation
+ * 
+ * Navigation Logic:
+ * - When a node is clicked, the canvas pans to center that node
+ * - Uses node coordinates (x, y) to calculate pan offset
+ * - Nodes are filtered to find matching coordinates
+ * 
+ * TODO: Add node count per category
+ * TODO: Add category color coding
+ * TODO: Add node position indicator
+ * TODO: Implement nested categories
+ */
+
 import { Link } from 'react-router-dom';
 import { Search, ChevronDown, ChevronRight, Trash2, Book, ArrowLeft, Settings } from 'lucide-react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';

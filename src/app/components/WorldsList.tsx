@@ -1,3 +1,26 @@
+/**
+ * WorldsList component - Main dashboard showing all user's universes
+ * 
+ * This component displays a grid of universe cards that users can:
+ * - Click to navigate to the editor
+ * - Drag to reorder (using react-dnd)
+ * - Create new universes via modal dialog
+ * - Upload custom icons for universes
+ * 
+ * Features:
+ * - Responsive grid layout (1-3 columns based on screen size)
+ * - Drag-and-drop reordering of universe cards
+ * - Empty state with call-to-action for first universe
+ * - Loading state while fetching universes
+ * - Create universe modal with icon upload
+ * - Sign out button in top right
+ * 
+ * TODO: Add pagination for large numbers of universes
+ * TODO: Add search/filter functionality
+ * TODO: Implement universe templates
+ * TODO: Add bulk operations (delete multiple)
+ */
+
 import { useState, useRef } from 'react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +37,17 @@ interface UniverseItemProps {
   navigate: (path: string) => void;
 }
 
+/**
+ * UniverseItem - Individual universe card component
+ * 
+ * Handles drag-and-drop functionality for reordering universes.
+ * Uses react-dnd with HTML5 backend for drag operations.
+ * 
+ * Drag Logic:
+ * - Uses hover threshold (middle of item) to determine when to swap
+ * - Only swaps when mouse crosses the midpoint
+ * - Updates the index in the drag item during hover
+ */
 const UniverseItem = React.memo(({ universe, index, moveUniverse, navigate }: UniverseItemProps) => {
   const ref = useRef<HTMLButtonElement>(null);
 

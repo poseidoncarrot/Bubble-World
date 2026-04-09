@@ -1,3 +1,30 @@
+/**
+ * storage.ts - LocalStorage operations (legacy)
+ * 
+ * This module provides localStorage-based storage operations:
+ * - CRUD operations for universes, pages, and subsections
+ * - Connection management
+ * - Used as fallback when Supabase is unavailable
+ * 
+ * NOTE: This is a legacy storage layer. The application now primarily
+ * uses Supabase for data persistence. This file remains for:
+ * - Offline support fallback
+ * - Development without database
+ * - Testing purposes
+ * 
+ * Operations:
+ * - getWorlds/saveWorlds: Global universe storage
+ * - getWorld/updateWorld/deleteWorld: Individual universe operations
+ * - createPage/updatePage/deletePage: Page operations
+ * - createSubsection/updateSubsection/deleteSubsection: Subsection operations
+ * - togglePageConnection/toggleSubsectionConnection: Connection management
+ * 
+ * Storage Key: 'architect_worlds'
+ * 
+ * TODO: Consider removing if Supabase is fully adopted
+ * TODO: Add migration utility to move data to Supabase
+ */
+
 import { Universe, Page, Subsection } from '../types';
 
 const STORAGE_KEY = 'architect_worlds';

@@ -1,3 +1,33 @@
+/**
+ * ModalContext - Modal state management
+ * 
+ * This context manages the state of modals throughout the application:
+ * - Delete confirmation modal state
+ * - Type-safe modal state management
+ * - Helper functions for common modal operations
+ * 
+ * Modal State:
+ * - isOpen: Whether the modal is currently visible
+ * - type: Type of item being deleted (page, category, subsection, universe)
+ * - itemId: ID of the item to delete
+ * - itemName: Display name of the item
+ * - parentId: Optional parent ID (for subsections)
+ * 
+ * Helper Functions:
+ * - setDeleteModal: Update modal state with partial updates
+ * - closeDeleteModal: Close the delete modal
+ * - openDeleteModal: Open the delete modal with pre-populated data
+ * 
+ * Usage:
+ * - Use useModal() to access modal state and functions
+ * - Call openDeleteModal() to show confirmation dialog
+ * - Call closeDeleteModal() to hide dialog
+ * 
+ * TODO: Add support for multiple modal types
+ * TODO: Add modal queue for nested modals
+ * TODO: Add animation state management
+ */
+
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { DeleteModalState } from '../types/enhanced';
 

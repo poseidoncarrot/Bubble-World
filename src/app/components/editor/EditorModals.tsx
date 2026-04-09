@@ -1,5 +1,32 @@
+/**
+ * EditorModals component - Modal dialogs for editor operations
+ * 
+ * This file contains three modal components for the editor:
+ * 1. CreateCategoryModal - Dialog for creating new categories
+ * 2. RenameCategoryModal - Dialog for renaming existing categories
+ * 3. CreatePageModal - Dialog for creating new pages in a specific category
+ * 
+ * All modals share:
+ * - Conditional rendering based on isOpen prop
+ * - Backdrop blur overlay
+ * - Keyboard support (Enter to submit)
+ * - Cancel and confirm buttons
+ * - Consistent styling
+ * 
+ * TODO: Add validation for category names (no duplicates)
+ * TODO: Add validation for page names (no duplicates in category)
+ * TODO: Add category icon selection
+ * TODO: Add page template selection
+ */
+
 import React from 'react';
 
+/**
+ * CreateCategoryModal - Modal for creating a new category
+ * 
+ * Allows users to create a new category to organize pages.
+ * The category name is entered and submitted via the onCreate callback.
+ */
 interface CreateCategoryModalProps {
   isOpen: boolean;
   newCategoryName: string;
@@ -39,6 +66,12 @@ export const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
   );
 };
 
+/**
+ * RenameCategoryModal - Modal for renaming an existing category
+ * 
+ * Allows users to rename a category. The new name is entered
+ * and submitted via the onRename callback.
+ */
 interface RenameCategoryModalProps {
   isOpen: boolean;
   renameCategoryValue: string;
@@ -77,6 +110,13 @@ export const RenameCategoryModal: React.FC<RenameCategoryModalProps> = ({
   );
 };
 
+/**
+ * CreatePageModal - Modal for creating a new page in a category
+ * 
+ * Allows users to create a new page within a specific category.
+ * The page title is entered and submitted via the onCreate callback.
+ * The category name is displayed in the modal header for context.
+ */
 interface CreatePageModalProps {
   isOpen: boolean;
   newPageTitle: string;

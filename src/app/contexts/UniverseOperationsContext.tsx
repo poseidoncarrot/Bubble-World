@@ -1,3 +1,33 @@
+/**
+ * UniverseOperationsContext - Context for universe CRUD operations
+ * 
+ * This context provides all CRUD operations for universes:
+ * - Universe operations (create, update, delete, reorder)
+ * - Category operations (add, rename, delete)
+ * - Page operations (create, update, delete, reorder)
+ * - Subsection operations (create, update, delete, reorder)
+ * - Image upload functionality
+ * 
+ * Architecture:
+ * - Delegates to specialized hooks for each entity type:
+ *   - useUniverseOperations: Universe-level operations
+ *   - useCategoryOperations: Category operations
+ *   - usePageOperations: Page operations
+ *   - useSubsectionOperations: Subsection operations
+ * - Combines all operations into single context for convenience
+ * - Handles image upload with fallback to base64
+ * 
+ * Image Upload:
+ * - Attempts to upload to server endpoint
+ * - Falls back to base64 encoding if server fails
+ * - Stores in user-specific path for organization
+ * 
+ * TODO: Add optimistic updates
+ * TODO: Add undo/redo functionality
+ * TODO: Add batch operations
+ * TODO: Add operation queue for offline support
+ */
+
 import { createContext, useContext, useCallback } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { getServerUrl } from '../utils/supabase';

@@ -1,3 +1,29 @@
+/**
+ * DeleteConfirmModal component - Confirmation dialog for delete operations
+ * 
+ * This component provides a safety confirmation before deleting:
+ * - Categories (with option to delete or move pages)
+ * - Pages
+ * - Subsections
+ * - Universes
+ * 
+ * Special Features:
+ * - For category deletion, offers two options:
+ *   1. Move pages to "Uncategorized" (default)
+ *   2. Delete all pages in the category
+ * - Theme-aware styling (Light/Dark)
+ * - Backdrop blur for modal overlay
+ * 
+ * Security:
+ * - Prevents accidental deletions
+ * - Makes destructive actions explicit
+ * - Cannot be undone (as stated in UI)
+ * 
+ * TODO: Add undo functionality with toast notification
+ * TODO: Add password confirmation for universe deletion
+ * TODO: Show list of items that will be affected
+ */
+
 import React, { useState } from 'react';
 
 type DeleteType = 'category' | 'page' | 'subsection' | 'universe';

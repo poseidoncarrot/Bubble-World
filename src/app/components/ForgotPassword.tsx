@@ -1,3 +1,26 @@
+/**
+ * Forgot Password component for password recovery
+ * 
+ * This component allows users to request a password reset link via email.
+ * 
+ * Security Features:
+ * - Email validation before sending reset link
+ * - Always shows success message (prevents email enumeration)
+ * - Automatic redirect to login after 3 seconds
+ * - Uses Supabase's built-in password reset functionality
+ * 
+ * Flow:
+ * 1. User enters email address
+ * 2. System validates email format
+ * 3. Sends reset link if account exists
+ * 4. Shows success message (even if account doesn't exist)
+ * 5. Redirects to login page
+ * 
+ * TODO: Add rate limiting to prevent abuse
+ * TODO: Show countdown timer before redirect
+ * TODO: Add option to resend reset link
+ */
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth';

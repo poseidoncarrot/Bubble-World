@@ -1,3 +1,30 @@
+/**
+ * PageSidebar component - Navigation sidebar for the editor
+ * 
+ * This component provides the left sidebar in the editor with:
+ * - Universe header with icon and description
+ * - Navigation tabs (Editor/Map)
+ * - Search functionality for pages and subsections
+ * - Category-based page organization
+ * - Drag-and-drop page reordering
+ * - Category management (create, rename, delete)
+ * - Page creation within categories
+ * - Theme-aware styling
+ * 
+ * Features:
+ * - Expandable/collapsible categories
+ * - Search filters pages and subsections
+ * - Drag pages between categories
+ * - Visual feedback during drag operations
+ * - "Uncategorized" section for pages without categories
+ * - Animated transitions using framer-motion
+ * 
+ * TODO: Add keyboard navigation
+ * TODO: Add page count per category
+ * TODO: Add category color coding
+ * TODO: Implement nested categories
+ */
+
 import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Book, Plus, ChevronDown, ChevronRight, Edit, Trash2, Search, GripVertical, Layers, Pencil, ArrowLeft, Settings } from 'lucide-react';

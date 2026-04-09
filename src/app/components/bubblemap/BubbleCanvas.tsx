@@ -1,3 +1,32 @@
+/**
+ * BubbleCanvas component - Interactive canvas for visual node map
+ * 
+ * This component renders the main canvas area for the bubble map view:
+ * - Renders nodes as draggable bubbles
+ * - Draws edges (connections) between nodes
+ * - Supports pan and zoom via mouse wheel
+ * - Handles node dragging and connection creation
+ * - Displays zoom controls
+ * - Shows connection mode indicator
+ * 
+ * Technical Implementation:
+ * - Uses CSS transforms for pan and zoom (performance)
+ * - SVG layer for edges (rendered behind nodes)
+ * - HTML div layer for nodes (on top of SVG)
+ * - Transform origin at center for smooth zooming
+ * - Pointer events management for drag vs click
+ * 
+ * Edge Types:
+ * - Hierarchy: Parent-child relationships (solid, subtle)
+ * - Connection: User-created links (dashed, red)
+ * 
+ * TODO: Add mini-map for navigation
+ * TODO: Add fit-to-screen button
+ * TODO: Add edge labels
+ * TODO: Implement auto-layout
+ * TODO: Add keyboard shortcuts for pan/zoom
+ */
+
 import { useRef } from 'react';
 import { X, ZoomIn, ZoomOut } from 'lucide-react';
 import { BubbleNode } from './BubbleNode';

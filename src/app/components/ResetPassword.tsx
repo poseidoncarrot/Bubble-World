@@ -1,3 +1,29 @@
+/**
+ * Reset Password component for setting a new password
+ * 
+ * This component handles the password reset flow after user clicks the reset link from email.
+ * 
+ * Flow:
+ * 1. Extracts access_token and refresh_token from URL parameters
+ * 2. Restores Supabase session using the tokens
+ * 3. Verifies the reset link is valid
+ * 4. Allows user to set new password
+ * 5. Updates password via Supabase
+ * 6. Signs out user for security
+ * 7. Redirects to login page
+ * 
+ * Security Features:
+ * - Token-based verification (prevents unauthorized resets)
+ * - Session restoration before password update
+ * - Automatic sign-out after password change
+ * - Password validation (minimum 6 characters)
+ * - Password confirmation matching
+ * 
+ * TODO: Add password strength requirements
+ * TODO: Show password strength indicator
+ * TODO: Add option to cancel and go back
+ */
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authService } from '../services/auth';

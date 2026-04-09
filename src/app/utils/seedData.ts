@@ -1,3 +1,28 @@
+/**
+ * seedData.ts - Seed data for first-time users
+ * 
+ * This module provides sample data for new users:
+ * - Creates a sample fantasy world "Aethelgard"
+ * - Includes sample pages with interconnected content
+ * - Demonstrates the application's features
+ * - Only initializes if no data exists
+ * 
+ * Sample Content:
+ * - Aethelgard: High fantasy setting
+ * - 4 interconnected pages (Kingdom, Outer Realm, Valenwood, Shadowspire)
+ * - Sample subsections with rich content
+ * - Pre-configured connections between pages
+ * 
+ * Usage:
+ * - Called on app initialization
+ * - Checks localStorage for existing data
+ * - Only seeds if no data exists
+ * 
+ * TODO: Add multiple seed world options
+ * TODO: Add seed data for different genres (sci-fi, modern, etc.)
+ * TODO: Add option to skip seed data
+ */
+
 import { Universe } from '../types';
 import { saveWorlds } from './storage';
 
