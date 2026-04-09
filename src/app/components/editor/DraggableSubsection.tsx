@@ -1,8 +1,9 @@
-import { useRef } from 'react';
+import { useRef, useCallback } from 'react';
 import { Trash2, GripVertical, Link as LinkIcon, X } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import { Page, Subsection, Universe } from '../../types';
 import { RichTextEditor } from '../RichTextEditor';
+import { useDebounce } from '../../hooks/useDebounce';
 
 interface DraggableSubsectionProps {
   sub: Subsection;
@@ -25,8 +26,22 @@ export const DraggableSubsection = ({
 }: DraggableSubsectionProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  
+  const debouncedUpdateTitle = useCallback(
+    useDebounce((universeId: string, pageId: string, subsectionId: string, title: string) => {
+      updateSubsection(universeId, pageId, subsectionId, { title });
+    }, 500),
+    [updateSubsection]
+  );
 
-  const [{ handlerId }, drop] = useDrop({
+  const debouncedUpdateContent = useCallback(
+    useDebounce((universeId: string, pageId: string, subsectionId: string, content: string) => {
+      updateSubsection(universeId, pageId, subsectionId, { content });
+    }, 500),
+    [updateSubsection]
+  );
+
+  const [, drop] = useDrop({
     accept: 'subsection',
     collect(monitor) {
       return {
@@ -88,7 +103,7 @@ export const DraggableSubsection = ({
       <input
         type="text"
         value={sub.title}
-        onChange={(e) => updateSubsection(universe.id, currentPage.id, sub.id, { title: e.target.value })}
+        onChange={(e) => debouncedUpdateTitle(universe.id, currentPage.id, sub.id, e.target.value)}
         className={`w-full font-bold text-[24px] bg-transparent border-none outline-none mb-4 pl-4
                    ${universe.settings?.theme === 'Dark' ? 'text-gray-200 placeholder-gray-600' : 'text-[#214059] placeholder-gray-300'}`}
         placeholder="Subsection Title"
@@ -96,7 +111,7 @@ export const DraggableSubsection = ({
       <RichTextEditor
         key={sub.id}
         content={sub.content}
-        onChange={(val) => updateSubsection(universe.id, currentPage.id, sub.id, { content: val })}
+        onChange={(val) => debouncedUpdateContent(universe.id, currentPage.id, sub.id, val)}
         theme={universe.settings?.theme || 'Light (Default)'}
       />
       

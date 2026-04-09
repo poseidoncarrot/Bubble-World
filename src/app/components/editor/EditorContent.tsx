@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Plus, Link as LinkIcon, ImageIcon, Upload, X } from 'lucide-react';
 import { Page, Universe } from '../../types';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { DraggableSubsection } from './DraggableSubsection';
+import { useDebounce } from '../../hooks/useDebounce';
 
 interface EditorContentProps {
   currentPage: Page | null;
@@ -25,6 +26,19 @@ export const EditorContent: React.FC<EditorContentProps> = ({
   setDeleteModal,
   moveSubsection
 }) => {
+  const debouncedUpdateTitle = useCallback(
+    useDebounce((universeId: string, pageId: string, title: string) => {
+      updatePage(universeId, pageId, { title });
+    }, 500),
+    [updatePage]
+  );
+
+  const debouncedUpdateDescription = useCallback(
+    useDebounce((universeId: string, pageId: string, description: string) => {
+      updatePage(universeId, pageId, { description });
+    }, 500),
+    [updatePage]
+  );
   const handleUploadCover = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && currentPage && universe) {
       try {
@@ -66,13 +80,13 @@ export const EditorContent: React.FC<EditorContentProps> = ({
           <input
             type="text"
             value={currentPage.title}
-            onChange={(e) => updatePage(universe.id, currentPage.id, { title: e.target.value })}
+            onChange={(e) => debouncedUpdateTitle(universe.id, currentPage.id, e.target.value)}
             className={`w-full font-bold text-[48px] bg-transparent border-none outline-none mb-4 ${universe.settings?.theme === 'Dark' ? 'text-white placeholder-gray-600' : 'text-[#214059] placeholder-gray-300'}`}
             placeholder="Page Title"
           />
           <textarea
             value={currentPage.description}
-            onChange={(e) => updatePage(universe.id, currentPage.id, { description: e.target.value })}
+            onChange={(e) => debouncedUpdateDescription(universe.id, currentPage.id, e.target.value)}
             className={`w-full text-[18px] bg-transparent border-none outline-none resize-none min-h-[100px] ${universe.settings?.theme === 'Dark' ? 'text-gray-300 placeholder-gray-600' : 'text-[#44474c] placeholder-gray-400'}`}
             placeholder="Write a short description..."
           />
