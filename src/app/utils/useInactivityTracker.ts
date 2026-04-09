@@ -109,19 +109,41 @@ export const useInactivityTracker = () => {
     // Check stored activity on mount
     checkStoredActivity();
 
-    // Track various user activities
+    // Track various user activities with throttling for performance
     const activityEvents = [
       'mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click',
       'keydown', 'keyup', 'focus', 'blur', 'change', 'input', 'submit'
     ];
 
+    // Throttle high-frequency events to improve performance
+    let lastActivityTime = 0;
+    const ACTIVITY_THROTTLE = 1000; // 1 second throttle
+
     const handleActivity = () => {
-      resetActivityTimer();
+      const now = Date.now();
+      if (now - lastActivityTime > ACTIVITY_THROTTLE) {
+        lastActivityTime = now;
+        resetActivityTimer();
+      }
     };
 
-    // Add event listeners
+    // Special handling for high-frequency events
+    const handleMouseMove = (e: MouseEvent) => {
+      // Only count mouse movement if it's significant
+      if (e.movementX !== 0 || e.movementY !== 0) {
+        handleActivity();
+      }
+    };
+
+    // Add event listeners with optimized options
     activityEvents.forEach(event => {
-      document.addEventListener(event, handleActivity, true);
+      if (event === 'mousemove') {
+        document.addEventListener(event, handleMouseMove, { passive: true, capture: true });
+      } else if (event === 'scroll') {
+        document.addEventListener(event, handleActivity, { passive: true, capture: true });
+      } else {
+        document.addEventListener(event, handleActivity, true);
+      }
     });
 
     // Handle visibility change (tab switching)
@@ -143,7 +165,13 @@ export const useInactivityTracker = () => {
     return () => {
       clearActivityTimeout();
       activityEvents.forEach(event => {
-        document.removeEventListener(event, handleActivity, true);
+        if (event === 'mousemove') {
+          document.removeEventListener(event, handleMouseMove, true);
+        } else if (event === 'scroll') {
+          document.removeEventListener(event, handleActivity, { capture: true } as any);
+        } else {
+          document.removeEventListener(event, handleActivity, true);
+        }
       });
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleUnload);

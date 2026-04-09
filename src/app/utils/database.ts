@@ -146,7 +146,8 @@ export const createPage = async (page: Omit<Page, 'id'> & { universe_id: string 
       description: page.description,
       cover_image: page.coverImage,
       category: page.category,
-      position: page.position || {}
+      position: page.position || {},
+      connections: page.connections || []
     })
     .select()
     .single();
@@ -163,7 +164,8 @@ export const updatePage = async (id: string, updates: Partial<Page>): Promise<Pa
       description: updates.description,
       cover_image: updates.coverImage,
       category: updates.category,
-      position: updates.position || {}
+      position: updates.position || {},
+      connections: updates.connections
     })
     .eq('id', id)
     .select()
@@ -215,7 +217,8 @@ export const createSubsection = async (subsection: Omit<Subsection, 'id'> & { pa
       page_id: subsection.page_id,
       title: subsection.title,
       content: subsection.content,
-      position: subsection.position || {}
+      position: subsection.position || {},
+      connections: subsection.connections || []
     })
     .select()
     .single();
@@ -230,7 +233,8 @@ export const updateSubsection = async (id: string, updates: Partial<Subsection>)
     .update({
       title: updates.title,
       content: updates.content,
-      position: updates.position || {}
+      position: updates.position || {},
+      connections: updates.connections
     })
     .eq('id', id)
     .select()
@@ -304,15 +308,17 @@ const transformPage = (data: any): Page => ({
   description: data.description || '',
   coverImage: data.cover_image,
   subsections: data.subsections || [],
-  connections: [], // Will be loaded separately
-  category: data.category
+  connections: data.connections || [],
+  category: data.category,
+  position: data.position
 });
 
 const transformSubsection = (data: any): Subsection => ({
   id: data.id,
   title: data.title,
   content: data.content || '',
-  connections: [] // Will be loaded separately
+  connections: data.connections || [],
+  position: data.position
 });
 
 const transformConnection = (data: any): Connection => ({

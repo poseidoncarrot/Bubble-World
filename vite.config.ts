@@ -23,10 +23,13 @@ export default defineConfig({
           // Separate vendor chunks for better caching
           vendor: ['react', 'react-dom'],
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', 'lucide-react'],
-          supabase: ['@supabase/supabase-js']
+          supabase: ['@supabase/supabase-js'],
+          router: ['react-router-dom'],
+          dnd: ['react-dnd', 'react-dnd-html5-backend']
         }
       }
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    sourcemap: false
   }
 })

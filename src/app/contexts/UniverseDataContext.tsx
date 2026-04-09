@@ -38,6 +38,10 @@ export const UniverseDataProvider = ({ children }: { children: React.ReactNode }
       return;
     }
 
+    // Prevent multiple simultaneous refreshes
+    const refreshId = Date.now();
+    (refreshUniverses as any).currentId = refreshId;
+
     try {
       setLoading(true);
       console.log('Fetching universes for user:', user.id);
@@ -50,7 +54,13 @@ export const UniverseDataProvider = ({ children }: { children: React.ReactNode }
       const universesData = await db.getUniverses(user.id);
       console.log('Universes data:', universesData);
       
-      // Load pages for each universe in parallel
+      // Check if this refresh is still the latest one
+      if ((refreshUniverses as any).currentId !== refreshId) {
+        console.log('Refresh cancelled due to newer request');
+        return;
+      }
+      
+      // Load pages for each universe in parallel with error handling
       const universesWithPages = await Promise.all(
         universesData.map(async (universe) => {
           try {
@@ -63,27 +73,39 @@ export const UniverseDataProvider = ({ children }: { children: React.ReactNode }
         })
       );
       
+      // Final check before updating state
+      if ((refreshUniverses as any).currentId !== refreshId) {
+        console.log('State update cancelled due to newer request');
+        return;
+      }
+      
       console.log('Universes with pages:', universesWithPages);
       setUniverses(universesWithPages);
       await saveUniverses(universesWithPages);
     } catch (error) {
       console.error('Failed to fetch universes:', error);
-      // Fallback to local storage if database fails
-      try {
-        const localData = localStorage.getItem('the-architect-universes');
-        if (localData) {
-          console.log('Using fallback local data');
-          setUniverses(JSON.parse(localData));
-        } else {
-          console.log('No local data found, setting empty array');
+      // Only update state if this is still the current refresh
+      if ((refreshUniverses as any).currentId === refreshId) {
+        // Fallback to local storage if database fails
+        try {
+          const localData = localStorage.getItem('the-architect-universes');
+          if (localData) {
+            console.log('Using fallback local data');
+            setUniverses(JSON.parse(localData));
+          } else {
+            console.log('No local data found, setting empty array');
+            setUniverses([]);
+          }
+        } catch (err) {
+          console.error("Failed to parse local universes", err);
           setUniverses([]);
         }
-      } catch (err) {
-        console.error("Failed to parse local universes", err);
-        setUniverses([]);
       }
     } finally {
-      setLoading(false);
+      // Only update loading state if this is still the current refresh
+      if ((refreshUniverses as any).currentId === refreshId) {
+        setLoading(false);
+      }
     }
   }, [user, saveUniverses]);
 
