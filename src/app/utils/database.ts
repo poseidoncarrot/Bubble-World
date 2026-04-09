@@ -114,6 +114,14 @@ export const updateUniverse = async (id: string, updates: Partial<Universe>): Pr
 
 export const deleteUniverse = async (id: string): Promise<void> => {
   try {
+    // Delete connections first to avoid foreign key constraint violations
+    const { error: deleteConnectionsError } = await supabase
+      .from('connections')
+      .delete()
+      .eq('universe_id', id);
+
+    if (deleteConnectionsError) throw deleteConnectionsError;
+
     const { data: pages, error: pagesError } = await supabase
       .from('pages')
       .select('id')
