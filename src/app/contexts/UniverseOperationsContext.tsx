@@ -1,12 +1,11 @@
-import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
-import { useAuth } from './AuthContext';
-import { getServerUrl, supabase } from './supabase';
+import { createContext, useContext, useCallback } from 'react';
+import { useAuth } from '../utils/AuthContext';
+import { getServerUrl, supabase } from '../utils/supabase';
 import { Universe, Page, Subsection } from '../types';
-import * as db from './database';
+import { useUniverseData } from './UniverseDataContext';
+import * as db from '../utils/database';
 
-type UniverseContextType = {
-  universes: Universe[];
-  loading: boolean;
+type UniverseOperationsContextType = {
   createUniverse: (name: string, description: string, iconUrl?: string) => Promise<Universe>;
   updateUniverse: (universeId: string, updates: Partial<Universe>) => Promise<void>;
   deleteUniverse: (universeId: string) => Promise<void>;
@@ -25,103 +24,13 @@ type UniverseContextType = {
   reorderSubsections: (universeId: string, pageId: string, startIndex: number, endIndex: number) => Promise<void>;
 };
 
-const UniverseContext = createContext<UniverseContextType | null>(null);
+const UniverseOperationsContext = createContext<UniverseOperationsContextType | null>(null);
 
-export const UniverseProvider = ({ children }: { children: React.ReactNode }) => {
-  const { session, user } = useAuth();
-  const [universes, setUniverses] = useState<Universe[]>([]);
-  const [loading, setLoading] = useState(true);
+export const UniverseOperationsProvider = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  const { universes, saveUniverses } = useUniverseData();
 
-  const fetchUniverses = useCallback(async () => {
-    if (!user) {
-      setUniverses([]);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      console.log('Fetching universes for user:', user.id);
-      
-      // Check if database functions are available
-      if (!db.getUniverses || !db.getPages) {
-        throw new Error('Database functions not available');
-      }
-      
-      const universesData = await db.getUniverses(user.id);
-      console.log('Universes data:', universesData);
-      
-      // Load pages for each universe in parallel
-      const universesWithPages = await Promise.all(
-        universesData.map(async (universe) => {
-          try {
-            const pages = await db.getPages(universe.id);
-            return { ...universe, pages };
-          } catch (pageError) {
-            console.error(`Failed to load pages for universe ${universe.id}:`, pageError);
-            return { ...universe, pages: [] };
-          }
-        })
-      );
-      
-      console.log('Universes with pages:', universesWithPages);
-      setUniverses(universesWithPages);
-    } catch (error) {
-      console.error('Failed to fetch universes:', error);
-      // Fallback to local storage if database fails
-      try {
-        const localData = localStorage.getItem('the-architect-universes');
-        if (localData) {
-          console.log('Using fallback local data');
-          setUniverses(JSON.parse(localData));
-        } else {
-          console.log('No local data found, setting empty array');
-          setUniverses([]);
-        }
-      } catch (err) {
-        console.error("Failed to parse local universes", err);
-        setUniverses([]);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (session) {
-      fetchUniverses().catch(error => {
-        console.error('Error in fetchUniverses:', error);
-        setLoading(false);
-      });
-    } else {
-      setUniverses([]);
-      setLoading(false);
-    }
-  }, [session, fetchUniverses]);
-
-  useEffect(() => {
-    return () => {
-      // Cleanup function to prevent state updates on unmounted component
-      setLoading(false);
-    };
-  }, []);
-
-  const saveUniverses = useCallback(async (newUniverses: Universe[]) => {
-    setUniverses(newUniverses);
-    // Only save to localStorage if there are actual changes
-    try {
-      const currentData = localStorage.getItem('the-architect-universes');
-      const newData = JSON.stringify(newUniverses);
-      if (currentData !== newData) {
-        localStorage.setItem('the-architect-universes', newData);
-      }
-    } catch (error) {
-      console.warn('Failed to save to localStorage:', error);
-    }
-    // Database operations are handled individually in the CRUD functions
-  }, []);
-
-  const uploadImage = async (file: File): Promise<string> => {
+  const uploadImage = useCallback(async (file: File): Promise<string> => {
     if (!user) throw new Error('Not authenticated');
     const formData = new FormData();
     formData.append('file', file);
@@ -145,21 +54,20 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
         reader.readAsDataURL(file);
       });
     }
-  };
+  }, [user]);
 
-  const reorderUniverses = async (startIndex: number, endIndex: number) => {
+  const reorderUniverses = useCallback(async (startIndex: number, endIndex: number) => {
     const result = Array.from(universes);
     const [removed] = result.splice(startIndex, 1);
     result.splice(endIndex, 0, removed);
-    setUniverses(result);
     await saveUniverses(result);
-  };
+  }, [universes, saveUniverses]);
 
-  const reorderPages = async (universeId: string, pageId: string, targetCategory: string | undefined, newIndex: number) => {
+  const reorderPages = useCallback(async (universeId: string, pageId: string, targetCategory: string | undefined, newIndex: number) => {
     const universe = universes.find(u => u.id === universeId);
     if (!universe) return;
 
-    // Remove the page from its current position
+    // Remove page from its current position
     const pageIndex = universe.pages.findIndex(p => p.id === pageId);
     if (pageIndex === -1) return;
     
@@ -167,33 +75,32 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
     const newPages = Array.from(universe.pages);
     newPages.splice(pageIndex, 1);
 
-    // Find the insertion point in the overall pages array
-    // Pages for the targetCategory
+    // Find insertion point in overall pages array
+    // Pages for targetCategory
     const targetPages = newPages.filter(p => (p.category || '') === (targetCategory || ''));
     
     let globalInsertIndex = newPages.length; // Default to end
     
     if (newIndex < targetPages.length) {
-      // Find the global index of the item that currently occupies the newIndex in the target category
+      // Find global index of item that currently occupies newIndex in target category
       const itemAtNewIndex = targetPages[newIndex];
       globalInsertIndex = newPages.findIndex(p => p.id === itemAtNewIndex.id);
     } else if (targetPages.length > 0) {
-      // Insert after the last item of the target category
+      // Insert after last item of target category
       const lastItem = targetPages[targetPages.length - 1];
       globalInsertIndex = newPages.findIndex(p => p.id === lastItem.id) + 1;
     } else {
-      // If category is empty, just append to the end or beginning
+      // If category is empty, just append to end or beginning
       globalInsertIndex = newPages.length;
     }
 
     newPages.splice(globalInsertIndex, 0, page);
 
     const newUniverses = universes.map(u => u.id === universeId ? { ...u, pages: newPages } : u);
-    setUniverses(newUniverses);
     await saveUniverses(newUniverses);
-  };
+  }, [universes, saveUniverses]);
 
-  const reorderSubsections = async (universeId: string, pageId: string, startIndex: number, endIndex: number) => {
+  const reorderSubsections = useCallback(async (universeId: string, pageId: string, startIndex: number, endIndex: number) => {
     const universe = universes.find(u => u.id === universeId);
     if (!universe) return;
 
@@ -209,11 +116,10 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
     newPages[pageIndex] = { ...page, subsections: newSubsections };
 
     const newUniverses = universes.map(u => u.id === universeId ? { ...u, pages: newPages } : u);
-    setUniverses(newUniverses);
     await saveUniverses(newUniverses);
-  };
+  }, [universes, saveUniverses]);
 
-  const createUniverse = async (name: string, description: string, iconUrl?: string) => {
+  const createUniverse = useCallback(async (name: string, description: string, iconUrl?: string) => {
     if (!user) throw new Error('Not authenticated');
     
     try {
@@ -238,9 +144,9 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
       console.error('Failed to create universe:', error);
       throw error;
     }
-  };
+  }, [user, universes, saveUniverses]);
 
-  const updateUniverse = async (universeId: string, updates: Partial<Universe>) => {
+  const updateUniverse = useCallback(async (universeId: string, updates: Partial<Universe>) => {
     try {
       await db.updateUniverse(universeId, updates);
       const newUniverses = universes.map(u => u.id === universeId ? { ...u, ...updates } : u);
@@ -249,9 +155,9 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
       console.error('Failed to update universe:', error);
       throw error;
     }
-  };
+  }, [universes, saveUniverses]);
 
-  const deleteUniverse = async (universeId: string) => {
+  const deleteUniverse = useCallback(async (universeId: string) => {
     try {
       await db.deleteUniverse(universeId);
       const newUniverses = universes.filter(u => u.id !== universeId);
@@ -260,20 +166,19 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
       console.error('Failed to delete universe:', error);
       throw error;
     }
-  };
+  }, [universes, saveUniverses]);
 
-  const addCategory = async (universeId: string, category: string) => {
+  const addCategory = useCallback(async (universeId: string, category: string) => {
     const newUniverses = universes.map(u => {
       if (u.id === universeId) {
         return { ...u, categories: [...(u.categories || []), category] };
       }
       return u;
     });
-    setUniverses(newUniverses);
     await saveUniverses(newUniverses);
-  };
+  }, [universes, saveUniverses]);
 
-  const renameCategory = async (universeId: string, oldCategory: string, newCategory: string) => {
+  const renameCategory = useCallback(async (universeId: string, oldCategory: string, newCategory: string) => {
     const newUniverses = universes.map(u => {
       if (u.id === universeId) {
         return {
@@ -287,11 +192,10 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
       }
       return u;
     });
-    setUniverses(newUniverses);
     await saveUniverses(newUniverses);
-  };
+  }, [universes, saveUniverses]);
 
-  const deleteCategory = async (universeId: string, category: string, deletePages: boolean) => {
+  const deleteCategory = useCallback(async (universeId: string, category: string, deletePages: boolean) => {
     const newUniverses = universes.map(u => {
       if (u.id === universeId) {
         return {
@@ -307,11 +211,10 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
       }
       return u;
     });
-    setUniverses(newUniverses);
     await saveUniverses(newUniverses);
-  };
+  }, [universes, saveUniverses]);
 
-  const createPage = async (universeId: string, title: string, description: string, category: string = '') => {
+  const createPage = useCallback(async (universeId: string, title: string, description: string, category: string = '') => {
     try {
       const newPage = await db.createPage({
         universe_id: universeId,
@@ -334,9 +237,9 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
       console.error('Failed to create page:', error);
       throw error;
     }
-  };
+  }, [universes, saveUniverses]);
 
-  const updatePage = async (universeId: string, pageId: string, updates: Partial<Page>) => {
+  const updatePage = useCallback(async (universeId: string, pageId: string, updates: Partial<Page>) => {
     let uIndex = universes.findIndex(u => u.id === universeId);
     if (uIndex === -1) return;
     let oldUniverse = universes[uIndex];
@@ -383,11 +286,10 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
 
     newPages = newPages.map(p => p.id === pageId ? { ...p, ...updates } : p);
     const newUniverses = universes.map(u => u.id === universeId ? { ...u, pages: newPages } : u);
-    setUniverses(newUniverses);
     await saveUniverses(newUniverses);
-  };
+  }, [universes, saveUniverses]);
 
-  const deletePage = async (universeId: string, pageId: string) => {
+  const deletePage = useCallback(async (universeId: string, pageId: string) => {
     const newUniverses = universes.map(u => {
       if (u.id === universeId) {
         const pages = u.pages.filter(p => p.id !== pageId).map(p => ({
@@ -402,11 +304,10 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
       }
       return u;
     });
-    setUniverses(newUniverses);
     await saveUniverses(newUniverses);
-  };
+  }, [universes, saveUniverses]);
 
-  const createSubsection = async (universeId: string, pageId: string, title: string, content: string) => {
+  const createSubsection = useCallback(async (universeId: string, pageId: string, title: string, content: string) => {
     try {
       const newSubsection = await db.createSubsection({
         page_id: pageId,
@@ -435,9 +336,9 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
       console.error('Failed to create subsection:', error);
       throw error;
     }
-  };
+  }, [universes, saveUniverses]);
 
-  const updateSubsection = async (universeId: string, pageId: string, subsectionId: string, updates: Partial<Subsection>) => {
+  const updateSubsection = useCallback(async (universeId: string, pageId: string, subsectionId: string, updates: Partial<Subsection>) => {
     let uIndex = universes.findIndex(u => u.id === universeId);
     if (uIndex === -1) return;
     let oldUniverse = universes[uIndex];
@@ -495,11 +396,10 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
     });
 
     const newUniverses = universes.map(u => u.id === universeId ? { ...u, pages: newPages } : u);
-    setUniverses(newUniverses);
     await saveUniverses(newUniverses);
-  };
+  }, [universes, saveUniverses]);
 
-  const deleteSubsection = async (universeId: string, pageId: string, subsectionId: string) => {
+  const deleteSubsection = useCallback(async (universeId: string, pageId: string, subsectionId: string) => {
     const newUniverses = universes.map(u => {
       if (u.id === universeId) {
         return {
@@ -518,33 +418,26 @@ export const UniverseProvider = ({ children }: { children: React.ReactNode }) =>
       }
       return u;
     });
-    setUniverses(newUniverses);
     await saveUniverses(newUniverses);
+  }, [universes, saveUniverses]);
+
+  const contextValue = {
+    createUniverse, updateUniverse, deleteUniverse,
+    addCategory, renameCategory, deleteCategory,
+    createPage, updatePage, deletePage,
+    createSubsection, updateSubsection, deleteSubsection,
+    uploadImage, reorderUniverses, reorderPages, reorderSubsections
   };
 
-  const contextValue = useMemo(() => ({
-    universes, loading, createUniverse, updateUniverse, deleteUniverse,
-    addCategory, renameCategory, deleteCategory,
-    createPage, updatePage, deletePage,
-    createSubsection, updateSubsection, deleteSubsection,
-    uploadImage, reorderUniverses, reorderPages, reorderSubsections
-  }), [
-    universes, loading, createUniverse, updateUniverse, deleteUniverse,
-    addCategory, renameCategory, deleteCategory,
-    createPage, updatePage, deletePage,
-    createSubsection, updateSubsection, deleteSubsection,
-    uploadImage, reorderUniverses, reorderPages, reorderSubsections
-  ]);
-
   return (
-    <UniverseContext.Provider value={contextValue}>
+    <UniverseOperationsContext.Provider value={contextValue}>
       {children}
-    </UniverseContext.Provider>
+    </UniverseOperationsContext.Provider>
   );
 };
 
-export const useUniverseStore = () => {
-  const ctx = useContext(UniverseContext);
-  if (!ctx) throw new Error('useUniverseStore must be used within UniverseProvider');
+export const useUniverseOperations = () => {
+  const ctx = useContext(UniverseOperationsContext);
+  if (!ctx) throw new Error('useUniverseOperations must be used within UniverseOperationsProvider');
   return ctx;
 };

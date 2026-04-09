@@ -1,6 +1,6 @@
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './utils/AuthContext';
-import { UniverseProvider } from './utils/UniverseContext';
+import { useUniverseStore } from './contexts/UniverseContext';
 
 export default function Root() {
   const { user, loading } = useAuth();
@@ -19,10 +19,8 @@ export default function Root() {
   }
 
   return (
-    <UniverseProvider>
-      <div className="min-h-screen bg-[#f8f9fa]">
-        <Outlet />
-      </div>
-    </UniverseProvider>
+    <div className="min-h-screen bg-[#f8f9fa]">
+      <Outlet />
+    </div>
   );
 }

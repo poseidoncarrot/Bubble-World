@@ -1,273 +1,15 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Book, Plus, MapIcon, Settings, ChevronDown, ChevronRight, Edit, Trash2, Link as LinkIcon, Image as ImageIcon, Upload, X, ArrowLeft, Pencil, Search, GripVertical, Layers } from 'lucide-react';
-import { useUniverseStore } from '../utils/UniverseContext';
+import { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Plus, Link as LinkIcon, Image as ImageIcon, Upload, X, Settings } from 'lucide-react';
+import { useUniverseStore } from '../contexts/UniverseContext';
 import { Universe, Page, Subsection } from '../types';
 import { RichTextEditor } from './RichTextEditor';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
-import { useDrag, useDrop, useDragLayer } from 'react-dnd';
-import { motion, AnimatePresence } from 'motion/react';
-
-interface DraggablePageProps {
-  page: Page;
-  index: number;
-  category: string;
-  currentPage: Page | null;
-  universe: Universe;
-  searchQuery: string;
-  setSelectedPage: (p: Page) => void;
-  setDeleteModal: (m: any) => void;
-  movePage: (dragIndex: number, hoverIndex: number, dragCategory: string, hoverCategory: string, pageId: string) => void;
-}
-
-const DraggablePage = ({ page, index, category, currentPage, universe, searchQuery, setSelectedPage, setDeleteModal, movePage }: DraggablePageProps) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const previewRef = useRef<HTMLButtonElement>(null);
-  const dragRef = useRef<HTMLDivElement>(null);
-
-  const [{ handlerId }, drop] = useDrop({
-    accept: 'page',
-    collect(monitor) {
-      return {
-        handlerId: monitor.getHandlerId(),
-      };
-    },
-    hover(item: any, monitor) {
-      if (!previewRef.current) return;
-      const dragIndex = item.index;
-      const hoverIndex = index;
-      const dragCategory = item.category;
-      const hoverCategory = category;
-
-      // Moving to self
-      if (dragIndex === hoverIndex && dragCategory === hoverCategory) return;
-
-      const hoverBoundingRect = previewRef.current?.getBoundingClientRect();
-      if (!hoverBoundingRect) return;
-      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      const clientOffset = monitor.getClientOffset();
-      if (!clientOffset) return;
-      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-
-      if (dragCategory === hoverCategory) {
-        if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
-        if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
-      }
-
-      movePage(dragIndex, hoverIndex, dragCategory, hoverCategory, item.id);
-      
-      item.index = hoverIndex;
-      item.category = hoverCategory;
-    },
-  });
-
-  const [{ isDragging }, drag, preview] = useDrag({
-    type: 'page',
-    item: () => ({ id: page.id, index, category }),
-    collect: (monitor: any) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-
-  drag(dragRef);
-  drop(previewRef);
-
-  return (
-    <button
-      ref={previewRef}
-      style={{ opacity: isDragging ? 0.5 : 1 }}
-      onClick={() => setSelectedPage(page)}
-      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between group ${
-        currentPage?.id === page.id
-          ? (universe.settings?.theme === 'Dark' ? 'bg-gray-700 text-blue-400 font-medium' : 'bg-[#eef2f6] text-[#214059] font-medium')
-          : (universe.settings?.theme === 'Dark' ? 'text-gray-400 hover:bg-gray-700' : 'text-[#44474c] hover:bg-gray-50')
-      }`}
-    >
-      <div className="flex items-center gap-2 flex-1 min-w-0">
-        <div ref={dragRef} className="cursor-grab active:cursor-grabbing text-gray-400 opacity-0 group-hover:opacity-100 p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded" onClick={e => e.stopPropagation()}>
-          <GripVertical className="w-3 h-3" />
-        </div>
-        <span className="truncate flex-1">{page.title}</span>
-      </div>
-      {searchQuery.trim() && page.subsections.some(s => s.title.toLowerCase().includes(searchQuery.toLowerCase())) && (
-        <span className={`text-[10px] ml-2 px-1.5 py-0.5 rounded ${universe.settings?.theme === 'Dark' ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>match</span>
-      )}
-      <Trash2 
-        className="w-3 h-3 opacity-0 group-hover:opacity-100 hover:text-red-500 ml-1 cursor-pointer shrink-0" 
-        onClick={(e) => {
-          e.stopPropagation();
-          setDeleteModal({
-            isOpen: true,
-            type: 'page',
-            itemId: page.id,
-            itemName: page.title
-          });
-        }}
-      />
-    </button>
-  );
-};
-
-interface CategoryDropZoneProps {
-  category: string;
-  isExpanded: boolean;
-  universe: Universe;
-  movePage: (dragIndex: number, hoverIndex: number, dragCategory: string, hoverCategory: string, pageId: string) => void;
-  children: React.ReactNode;
-}
-
-const CategoryDropZone = ({ category, isExpanded, universe, movePage, children }: CategoryDropZoneProps) => {
-  const dropRef = useRef<HTMLDivElement>(null);
-  const [{ isOver }, drop] = useDrop({
-    accept: 'page',
-    drop: (item: any) => {
-      // Handle drop logic here
-      movePage(item.index, 0, item.category, category, item.id);
-    },
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-    }),
-  });
-
-  drop(dropRef);
-
-  const isUncategorized = !category || category === 'Uncategorized';
-
-  return (
-    <div ref={dropRef} className={`space-y-1 transition-colors pb-2 ${isUncategorized ? '' : 'ml-4 border-l-2 pl-2 min-h-[10px]'} ${universe.settings?.theme === 'Dark' ? 'border-gray-600' : 'border-gray-100'} ${isOver ? 'bg-blue-50/50 dark:bg-blue-900/10 rounded-lg' : ''}`}>
-      {children}
-    </div>
-  );
-};
-
-interface DraggableSubsectionProps {
-  sub: Subsection;
-  index: number;
-  currentPage: Page;
-  universe: Universe;
-  setDeleteModal: (m: any) => void;
-  updateSubsection: (uId: string, pId: string, sId: string, updates: Partial<Subsection>) => void;
-  moveSubsection: (dragIndex: number, hoverIndex: number) => void;
-}
-
-const DraggableSubsection = ({ sub, index, currentPage, universe, setDeleteModal, updateSubsection, moveSubsection }: DraggableSubsectionProps) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const previewRef = useRef<HTMLDivElement>(null);
-
-  const [{ handlerId }, drop] = useDrop({
-    accept: 'subsection',
-    collect(monitor) {
-      return {
-        handlerId: monitor.getHandlerId(),
-      };
-    },
-    hover(item: any, monitor) {
-      if (!previewRef.current) return;
-      const dragIndex = item.index;
-      const hoverIndex = index;
-      if (dragIndex === hoverIndex) return;
-
-      const hoverBoundingRect = previewRef.current?.getBoundingClientRect();
-      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      const clientOffset = monitor.getClientOffset();
-      if (!clientOffset) return;
-      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-
-      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
-      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
-
-      moveSubsection(dragIndex, hoverIndex);
-      item.index = hoverIndex;
-    },
-  });
-
-  const [{ isDragging }, drag, preview] = useDrag({
-    type: 'subsection',
-    item: () => ({ id: sub.id, index }),
-    collect: (monitor: any) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-
-  drag(ref);
-  drop(previewRef);
-  preview(previewRef);
-
-  return (
-    <div ref={previewRef} style={{ opacity: isDragging ? 0.5 : 1 }} className={`relative group p-6 -mx-6 rounded-2xl border transition-all 
-                                 ${universe.settings?.theme === 'Dark' ? 'border-gray-800 hover:border-gray-700 hover:bg-gray-800/50' : 'border-transparent hover:border-gray-100 hover:bg-white hover:shadow-sm'}`}>
-      <div ref={ref} className="absolute left-0 top-1/2 -translate-y-1/2 -ml-3 p-1 cursor-grab active:cursor-grabbing text-gray-400 opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
-        <GripVertical className="w-4 h-4" />
-      </div>
-      <button 
-        onClick={() => setDeleteModal({
-          isOpen: true,
-          type: 'subsection',
-          itemId: sub.id,
-          itemName: sub.title || 'Subsection',
-          parentId: currentPage.id
-        })}
-        className={`absolute top-4 right-4 p-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg 
-                   ${universe.settings?.theme === 'Dark' ? 'text-gray-500 hover:text-red-400 hover:bg-red-900/20' : 'text-gray-400 hover:text-red-500 hover:bg-red-50'}`}
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
-      <input
-        type="text"
-        value={sub.title}
-        onChange={(e) => updateSubsection(universe.id, currentPage.id, sub.id, { title: e.target.value })}
-        className={`w-full font-bold text-[24px] bg-transparent border-none outline-none mb-4 pl-4
-                   ${universe.settings?.theme === 'Dark' ? 'text-gray-200 placeholder-gray-600' : 'text-[#214059] placeholder-gray-300'}`}
-        placeholder="Subsection Title"
-      />
-      <RichTextEditor
-        key={sub.id}
-        content={sub.content}
-        onChange={(val) => updateSubsection(universe.id, currentPage.id, sub.id, { content: val })}
-      />
-      
-      {/* Connections Section within Subsection */}
-      <div className="mt-4 p-4 bg-black/5 rounded-xl ml-4">
-        <div className="flex items-center gap-2 mb-2">
-          <LinkIcon className={`w-4 h-4 ${universe.settings?.theme === 'Dark' ? 'text-gray-400' : 'text-[#44474c]'}`} />
-          <span className={`text-sm font-medium ${universe.settings?.theme === 'Dark' ? 'text-gray-400' : 'text-[#44474c]'}`}>Connections</span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {sub.connections.map(connId => {
-            const connectedPage = universe.pages.find(p => p.id === connId) || 
-                                  universe.pages.flatMap(p => p.subsections).find(s => s.id === connId);
-            return connectedPage ? (
-              <span key={connId} className={`px-3 py-1 rounded-full text-sm flex items-center gap-2 ${universe.settings?.theme === 'Dark' ? 'bg-gray-700 text-blue-300' : 'bg-[#eef2f6] text-[#214059]'}`}>
-                {connectedPage.title}
-                <button onClick={() => updateSubsection(universe.id, currentPage.id, sub.id, { connections: sub.connections.filter(id => id !== connId) })}>
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ) : null;
-          })}
-          <select 
-            className={`text-sm rounded-full px-3 py-1 outline-none cursor-pointer ${universe.settings?.theme === 'Dark' ? 'bg-gray-700 text-gray-300' : 'bg-white shadow-sm border border-gray-200'}`}
-            value=""
-            onChange={(e) => {
-              if (e.target.value) {
-                updateSubsection(universe.id, currentPage.id, sub.id, { connections: [...sub.connections, e.target.value] });
-              }
-            }}
-          >
-            <option value="">+ Add Connection</option>
-            {universe.pages.filter(p => p.id !== currentPage.id).map(p => (
-              <option key={p.id} value={p.id}>Page: {p.title}</option>
-            ))}
-            {universe.pages.flatMap(p => p.subsections).filter(s => s.id !== sub.id).map(s => (
-              <option key={s.id} value={s.id}>Section: {s.title}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-    </div>
-  );
-};
+import { PageSidebar } from './editor/PageSidebar';
+import { DraggableSubsection } from './editor/DraggableSubsection';
+import { useDebounce } from '../hooks/useDebounce';
+import { useDragAndDrop } from '../hooks/useDragAndDrop';
 
 export default function Editor() {
   const { worldId: universeId } = useParams();
@@ -293,39 +35,22 @@ export default function Editor() {
   const [localUniverseDescription, setLocalUniverseDescription] = useState('');
   const [renameCategoryValue, setRenameCategoryValue] = useState('');
   
-  // Separate debounced update functions to prevent field interference
-  const debouncedUpdateUniverseName = useMemo(
-    () => {
-      let timeoutId: NodeJS.Timeout;
-      return (universeId: string, name: string) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          updateUniverse(universeId, { name });
-        }, 500);
-      };
+  // Use custom hooks
+  const debouncedUpdateUniverseName = useDebounce(
+    (universeId: string, name: string) => {
+      updateUniverse(universeId, { name });
     },
-    [updateUniverse]
+    500
   );
   
-  const debouncedUpdateUniverseDescription = useMemo(
-    () => {
-      let timeoutId: NodeJS.Timeout;
-      return (universeId: string, description: string) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          updateUniverse(universeId, { description });
-        }, 500);
-      };
+  const debouncedUpdateUniverseDescription = useDebounce(
+    (universeId: string, description: string) => {
+      updateUniverse(universeId, { description });
     },
-    [updateUniverse]
+    500
   );
   
-  // Cleanup timeout on unmount to prevent memory leaks
-  useEffect(() => {
-    return () => {
-      // Cleanup will be handled by the debounced functions' internal clearTimeout
-    };
-  }, []);
+  const { movePage, moveSubsection } = useDragAndDrop();
   
   // Sync local state with universe data when universe changes
   useEffect(() => {
@@ -337,10 +62,6 @@ export default function Editor() {
   
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const { isDraggingPage } = useDragLayer((monitor) => ({
-    isDraggingPage: monitor.isDragging() && monitor.getItemType() === 'page'
-  }));
 
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -356,32 +77,13 @@ export default function Editor() {
   });
 
   useEffect(() => {
-    if (universe && universe.pages.length > 0 && !selectedPage) {
+    if (universe && universe.pages && universe.pages.length > 0 && !selectedPage) {
       setSelectedPage(universe.pages[0]);
     }
   }, [universe, selectedPage]);
 
-  const categories = useMemo(() => {
-    if (!universe) return [];
-    return Array.from(new Set(universe.categories || []));
-  }, [universe]);
-
-  const filteredPages = useMemo(() => {
-    if (!universe) return [];
-    if (!searchQuery.trim()) return universe.pages;
-    const lower = searchQuery.toLowerCase();
-    return universe.pages.filter(p => 
-      p.title.toLowerCase().includes(lower) || 
-      p.subsections.some(s => s.title.toLowerCase().includes(lower))
-    );
-  }, [universe, searchQuery]);
-
-  if (!universe) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  }
-
   // Refreshed selected page
-  const currentPage = universe.pages.find(p => p.id === selectedPage?.id) || (universe.pages.length > 0 ? universe.pages[0] : null);
+  const currentPage = universe?.pages?.find(p => p.id === selectedPage?.id) || (universe?.pages && universe.pages.length > 0 ? universe.pages[0] : null);
 
   const handleCreateCategory = async () => {
     if (newCategoryName.trim() && universe) {
@@ -402,7 +104,7 @@ export default function Editor() {
   };
 
   const handleCreatePage = async () => {
-    if (newPageTitle.trim()) {
+    if (newPageTitle.trim() && universe) {
       const page = await createPage(universe.id, newPageTitle, '', newPageCategory);
       setSelectedPage(page);
       setIsCreatingPage(false);
@@ -411,7 +113,7 @@ export default function Editor() {
   };
 
   const handleUploadCover = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0] && currentPage) {
+    if (e.target.files && e.target.files[0] && currentPage && universe) {
       try {
         const url = await uploadImage(e.target.files[0]);
         await updatePage(universe.id, currentPage.id, { coverImage: url });
@@ -451,220 +153,52 @@ export default function Editor() {
     reorderSubsections(universe.id, currentPage.id, dragIndex, hoverIndex);
   };
 
+  if (!universe) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
   return (
     <div className="flex h-screen overflow-hidden transition-colors duration-300"
          style={{ 
            backgroundColor: universe.settings?.theme === 'Dark' ? '#1a202c' : 
                             universe.settings?.theme === 'Parchment' ? '#fdf6e3' : '#f8f9fa'
          }}>
-      {/* Left Sidebar */}
-      <div className={`w-[300px] flex-shrink-0 border-r flex flex-col z-10 relative transition-colors duration-300
-                      ${universe.settings?.theme === 'Dark' ? 'bg-[#2d3748] border-gray-700' : 
-                        universe.settings?.theme === 'Parchment' ? 'bg-[#fefcbf] border-[#e2e8f0]' : 
-                        'bg-white border-[#e1e3e4]'}`}>
-        <div className={`p-6 border-b flex items-center justify-between ${universe.settings?.theme === 'Dark' ? 'border-gray-700' : 'border-[#e1e3e4]'}`}>
-          <div className="flex items-center gap-3">
-            {universe.icon ? (
-              <ImageWithFallback src={universe.icon} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
-            ) : (
-              <div className="bg-[#395771] rounded-full p-2 shrink-0">
-                <Book className="w-5 h-5 text-[#aecdeb]" />
-              </div>
-            )}
-            <div className="min-w-0">
-              <div className={`font-bold text-[14px] truncate ${universe.settings?.theme === 'Dark' ? 'text-white' : 'text-[#164e63]'}`}>
-                {universe.name}
-              </div>
-              <div className={`text-[10px] opacity-70 uppercase tracking-[0.5px] line-clamp-2 mt-0.5 ${universe.settings?.theme === 'Dark' ? 'text-gray-400' : 'text-[#44474c]'}`}>
-                {universe.description || 'Universe Setting'}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className={`flex border-b ${universe.settings?.theme === 'Dark' ? 'border-gray-700' : 'border-[#e1e3e4]'}`}>
-          <div className={`flex-1 py-3 px-4 font-semibold text-[12px] border-b-2 text-center
-                          ${universe.settings?.theme === 'Dark' ? 'text-blue-400 border-blue-400' : 'text-[#214059] border-[#214059]'}`}>
-            Editor
-          </div>
-          <Link
-            to={`/world/${universe.id}/map`}
-            className={`flex-1 py-3 px-4 font-semibold text-[12px] opacity-60 hover:opacity-100 text-center
-                       ${universe.settings?.theme === 'Dark' ? 'text-gray-300' : 'text-[#44474c]'}`}
-          >
-            Map
-          </Link>
-        </div>
-
-        <div className={`p-4 border-b ${universe.settings?.theme === 'Dark' ? 'border-gray-700' : 'border-[#e1e3e4]'}`}>
-          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border focus-within:ring-2 focus-within:ring-opacity-50 transition-all
-                          ${universe.settings?.theme === 'Dark' 
-                            ? 'bg-[#1a202c] border-gray-600 focus-within:border-blue-500 focus-within:ring-blue-500/50' 
-                            : 'bg-white border-[#e1e3e4] focus-within:border-[#214059] focus-within:ring-[#214059]'}`}>
-            <Search className={`w-4 h-4 shrink-0 ${universe.settings?.theme === 'Dark' ? 'text-gray-400' : 'text-gray-400'}`} />
-            <input 
-              type="text" 
-              placeholder="Search pages & sections..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full bg-transparent outline-none text-sm
-                         ${universe.settings?.theme === 'Dark' ? 'text-gray-200 placeholder-gray-500' : 'text-[#214059] placeholder-gray-400'}`}
-            />
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4">
-          <AnimatePresence>
-            {(filteredPages.filter(p => !p.category || p.category === 'Uncategorized').length > 0 || isDraggingPage) && (
-              <motion.div
-                initial={{ height: 0, opacity: 0, marginBottom: 0 }}
-                animate={{ height: 'auto', opacity: 1, marginBottom: 24 }}
-                exit={{ height: 0, opacity: 0, marginBottom: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <CategoryDropZone category="" isExpanded={true} universe={universe} movePage={handleMovePage}>
-                  {filteredPages.filter(p => !p.category || p.category === 'Uncategorized').map((page, index) => (
-                    <DraggablePage 
-                      key={page.id} 
-                      page={page} 
-                      index={index} 
-                      category=""
-                      currentPage={currentPage}
-                      universe={universe}
-                      searchQuery={searchQuery}
-                      setSelectedPage={setSelectedPage}
-                      setDeleteModal={setDeleteModal}
-                      movePage={handleMovePage}
-                    />
-                  ))}
-                  {filteredPages.filter(p => !p.category || p.category === 'Uncategorized').length === 0 && isDraggingPage && (
-                    <div className={`mx-2 my-1 border-2 border-dashed rounded-lg flex items-center justify-center gap-2 px-3 py-2 transition-colors ${universe.settings?.theme === 'Dark' ? 'border-gray-600 bg-gray-800/50' : 'border-blue-300 bg-blue-50/50'}`}>
-                      <Layers className={`w-4 h-4 shrink-0 ${universe.settings?.theme === 'Dark' ? 'text-gray-500' : 'text-blue-500'}`} />
-                      <span className={`text-xs font-medium ${universe.settings?.theme === 'Dark' ? 'text-gray-400' : 'text-blue-600'}`}>Drop page here to remove from category</span>
-                    </div>
-                  )}
-                </CategoryDropZone>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {categories.filter(c => c !== 'Uncategorized').map(category => {
-            const catPages = filteredPages.filter(p => p.category === category);
-            if (searchQuery.trim() && catPages.length === 0) return null;
-            const isExpanded = searchQuery.trim() ? true : expandedCategories.has(category);
-            
-            return (
-              <div key={category} className="space-y-1 mb-6">
-                <div 
-                  className="flex items-center gap-2 px-2 py-1 cursor-pointer group"
-                  onClick={() => {
-                    const next = new Set(expandedCategories);
-                    if (next.has(category)) next.delete(category);
-                    else next.add(category);
-                    setExpandedCategories(next);
-                  }}
-                >
-                  {isExpanded ? (
-                    <ChevronDown className={`w-4 h-4 ${universe.settings?.theme === 'Dark' ? 'text-gray-400' : 'text-[#44474c]'}`} />
-                  ) : (
-                    <ChevronRight className={`w-4 h-4 ${universe.settings?.theme === 'Dark' ? 'text-gray-400' : 'text-[#44474c]'}`} />
-                  )}
-                  <span className={`text-xs font-semibold tracking-wider uppercase ${universe.settings?.theme === 'Dark' ? 'text-gray-300' : 'text-[#44474c]'}`}>{category}</span>
-                  
-                  <div className="ml-auto opacity-0 group-hover:opacity-100 flex items-center gap-1">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCategoryToRename(category);
-                        setRenameCategoryValue(category);
-                        setIsRenamingCategory(true);
-                      }}
-                      className={`p-1 rounded ${universe.settings?.theme === 'Dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-100'}`}
-                    >
-                      <Pencil className={`w-3 h-3 ${universe.settings?.theme === 'Dark' ? 'text-gray-300' : 'text-[#214059]'}`} />
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setNewPageCategory(category);
-                        setIsCreatingPage(true);
-                      }}
-                      className={`p-1 rounded ${universe.settings?.theme === 'Dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-100'}`}
-                    >
-                      <Plus className={`w-3 h-3 ${universe.settings?.theme === 'Dark' ? 'text-gray-300' : 'text-[#214059]'}`} />
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteModal({
-                          isOpen: true,
-                          type: 'category',
-                          itemId: category,
-                          itemName: category
-                        });
-                      }}
-                      className={`p-1 rounded ${universe.settings?.theme === 'Dark' ? 'hover:bg-gray-600 hover:text-red-400' : 'hover:bg-gray-100 hover:text-red-500'}`}
-                    >
-                      <Trash2 className={`w-3 h-3 ${universe.settings?.theme === 'Dark' ? 'text-gray-300' : 'text-[#214059]'}`} />
-                    </button>
-                  </div>
-                </div>
-
-                {isExpanded && (
-                  <CategoryDropZone category={category} isExpanded={isExpanded} universe={universe} movePage={handleMovePage}>
-                    {catPages.map((page, index) => (
-                      <DraggablePage 
-                        key={page.id} 
-                        page={page} 
-                        index={index} 
-                        category={category}
-                        currentPage={currentPage}
-                        universe={universe}
-                        searchQuery={searchQuery}
-                        setSelectedPage={setSelectedPage}
-                        setDeleteModal={setDeleteModal}
-                        movePage={handleMovePage}
-                      />
-                    ))}
-                    {catPages.length === 0 && !searchQuery.trim() && (
-                      <div className="text-xs text-gray-400 italic px-3 py-1">No pages</div>
-                    )}
-                  </CategoryDropZone>
-                )}
-              </div>
-            );
-          })}
-
-          <button
-            onClick={() => setIsCreatingCategory(true)}
-            className={`mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors font-medium border border-dashed
-                       ${universe.settings?.theme === 'Dark' 
-                         ? 'text-gray-300 border-gray-600 hover:bg-gray-700' 
-                         : 'text-[#214059] border-[#214059]/30 hover:bg-[#f8f9fa]'}`}
-          >
-            <Plus className="w-4 h-4" />
-            Add Category
-          </button>
-        </div>
-
-        <div className={`p-4 border-t flex items-center justify-between ${universe.settings?.theme === 'Dark' ? 'border-gray-700' : 'border-[#e1e3e4]'}`}>
-          <button
-            onClick={() => navigate('/')}
-            className={`flex items-center gap-2 transition-colors ${universe.settings?.theme === 'Dark' ? 'text-gray-400 hover:text-white' : 'text-[#44474c] hover:text-[#214059]'}`}
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium text-sm">Dashboard</span>
-          </button>
-          <button 
-            onClick={() => setIsSettingsOpen(true)} 
-            className={`p-2 rounded-lg transition-colors ${universe.settings?.theme === 'Dark' ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-[#44474c] hover:text-[#214059] hover:bg-gray-100'}`}
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+      {/* Page Sidebar */}
+      <PageSidebar
+        universe={universe}
+        currentPage={currentPage}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedPage={selectedPage}
+        setSelectedPage={setSelectedPage}
+        setDeleteModal={setDeleteModal}
+        expandedCategories={expandedCategories}
+        setExpandedCategories={setExpandedCategories}
+        isCreatingPage={isCreatingPage}
+        setIsCreatingPage={setIsCreatingPage}
+        isCreatingCategory={isCreatingCategory}
+        setIsCreatingCategory={setIsCreatingCategory}
+        isRenamingCategory={isRenamingCategory}
+        setIsRenamingCategory={setIsRenamingCategory}
+        newPageCategory={newPageCategory}
+        setNewPageCategory={setNewPageCategory}
+        newPageTitle={newPageTitle}
+        setNewPageTitle={setNewPageTitle}
+        newCategoryName={newCategoryName}
+        setNewCategoryName={setNewCategoryName}
+        categoryToRename={categoryToRename}
+        setCategoryToRename={setCategoryToRename}
+        renameCategoryValue={renameCategoryValue}
+        setRenameCategoryValue={setRenameCategoryValue}
+        handleCreatePage={handleCreatePage}
+        handleCreateCategory={handleCreateCategory}
+        handleRenameCategory={handleRenameCategory}
+        movePage={handleMovePage}
+        onNavigateBack={() => navigate('/')}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        addCategory={addCategory}
+        renameCategory={renameCategory}
+      />
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto relative">
@@ -773,6 +307,7 @@ export default function Editor() {
         )}
       </div>
 
+      {/* Modals */}
       {isCreatingCategory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-6 w-[400px]">
