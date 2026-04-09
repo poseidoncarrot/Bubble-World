@@ -1,6 +1,6 @@
 import { createContext, useContext, useCallback } from 'react';
 import { useAuth } from '../utils/AuthContext';
-import { getServerUrl, supabase } from '../utils/supabase';
+import { getServerUrl } from '../utils/supabase';
 import { Universe, Page, Subsection } from '../types';
 import { useUniverseData } from './UniverseDataContext';
 import * as db from '../utils/database';
@@ -169,9 +169,18 @@ export const UniverseOperationsProvider = ({ children }: { children: React.React
   }, [universes, saveUniverses]);
 
   const addCategory = useCallback(async (universeId: string, category: string) => {
+    const universe = universes.find(u => u.id === universeId);
+    if (!universe) throw new Error('Universe not found');
+    
+    const updatedCategories = [...(universe.categories || []), category];
+    
+    // Update database
+    await db.updateUniverse(universeId, { categories: updatedCategories });
+    
+    // Update local state
     const newUniverses = universes.map(u => {
       if (u.id === universeId) {
-        return { ...u, categories: [...(u.categories || []), category] };
+        return { ...u, categories: updatedCategories };
       }
       return u;
     });
@@ -179,11 +188,28 @@ export const UniverseOperationsProvider = ({ children }: { children: React.React
   }, [universes, saveUniverses]);
 
   const renameCategory = useCallback(async (universeId: string, oldCategory: string, newCategory: string) => {
+    const universe = universes.find(u => u.id === universeId);
+    if (!universe) throw new Error('Universe not found');
+    
+    const updatedCategories = (universe.categories || []).map(c => c === oldCategory ? newCategory : c);
+    
+    // Update database
+    await db.updateUniverse(universeId, { categories: updatedCategories });
+    
+    // Update pages in database that have the old category
+    const pagesToUpdate = universe.pages.filter(p => p.category === oldCategory);
+    await Promise.all(
+      pagesToUpdate.map(page => 
+        db.updatePage(page.id, { category: newCategory })
+      )
+    );
+    
+    // Update local state
     const newUniverses = universes.map(u => {
       if (u.id === universeId) {
         return {
           ...u,
-          categories: (u.categories || []).map(c => c === oldCategory ? newCategory : c),
+          categories: updatedCategories,
           pages: u.pages.map(p => ({
             ...p,
             category: p.category === oldCategory ? newCategory : p.category
@@ -196,11 +222,38 @@ export const UniverseOperationsProvider = ({ children }: { children: React.React
   }, [universes, saveUniverses]);
 
   const deleteCategory = useCallback(async (universeId: string, category: string, deletePages: boolean) => {
+    const universe = universes.find(u => u.id === universeId);
+    if (!universe) throw new Error('Universe not found');
+    
+    const updatedCategories = (universe.categories || []).filter(c => c !== category);
+    
+    // Update database
+    await db.updateUniverse(universeId, { categories: updatedCategories });
+    
+    if (deletePages) {
+      // Delete pages in database
+      const pagesToDelete = universe.pages.filter(p => p.category === category);
+      await Promise.all(
+        pagesToDelete.map(page => 
+          db.deletePage(page.id)
+        )
+      );
+    } else {
+      // Update pages in database to remove category
+      const pagesToUpdate = universe.pages.filter(p => p.category === category);
+      await Promise.all(
+        pagesToUpdate.map(page => 
+          db.updatePage(page.id, { category: '' })
+        )
+      );
+    }
+    
+    // Update local state
     const newUniverses = universes.map(u => {
       if (u.id === universeId) {
         return {
           ...u,
-          categories: (u.categories || []).filter(c => c !== category),
+          categories: updatedCategories,
           pages: deletePages 
             ? u.pages.filter(p => p.category !== category)
             : u.pages.map(p => ({
@@ -240,71 +293,49 @@ export const UniverseOperationsProvider = ({ children }: { children: React.React
   }, [universes, saveUniverses]);
 
   const updatePage = useCallback(async (universeId: string, pageId: string, updates: Partial<Page>) => {
-    let uIndex = universes.findIndex(u => u.id === universeId);
-    if (uIndex === -1) return;
-    let oldUniverse = universes[uIndex];
-    let pIndex = oldUniverse.pages.findIndex(p => p.id === pageId);
-    if (pIndex === -1) return;
-    let oldPage = oldUniverse.pages[pIndex];
-
-    let newPages = oldUniverse.pages.map(p => ({ ...p }));
-
-    if (updates.connections) {
-      const added = updates.connections.filter(c => !oldPage.connections.includes(c));
-      const removed = oldPage.connections.filter(c => !updates.connections!.includes(c));
+    try {
+      // Update database
+      await db.updatePage(pageId, updates);
       
-      const updateBidir = (targetId: string, sourceId: string, isAdd: boolean) => {
-        newPages = newPages.map(p => {
-          let updatedP = false;
-          let conns = p.connections;
-          if (p.id === targetId) {
-            if (isAdd && !conns.includes(sourceId)) { conns = [...conns, sourceId]; updatedP = true; }
-            if (!isAdd && conns.includes(sourceId)) { conns = conns.filter(id => id !== sourceId); updatedP = true; }
-          }
-          
-          let subsModified = false;
-          let newSubs = p.subsections.map(s => {
-            if (s.id === targetId) {
-              let sConns = s.connections;
-              if (isAdd && !sConns.includes(sourceId)) { sConns = [...sConns, sourceId]; subsModified = true; }
-              if (!isAdd && sConns.includes(sourceId)) { sConns = sConns.filter(id => id !== sourceId); subsModified = true; }
-              return { ...s, connections: sConns };
-            }
-            return s;
-          });
-          
-          if (updatedP || subsModified) {
-            return { ...p, connections: updatedP ? conns : p.connections, subsections: subsModified ? newSubs : p.subsections };
-          }
-          return p;
-        });
-      };
-
-      added.forEach(c => updateBidir(c, pageId, true));
-      removed.forEach(c => updateBidir(c, pageId, false));
+      // Update local state
+      const newUniverses = universes.map(u => {
+        if (u.id === universeId) {
+          return {
+            ...u,
+            pages: u.pages.map(p => 
+              p.id === pageId ? { ...p, ...updates } : p
+            )
+          };
+        }
+        return u;
+      });
+      await saveUniverses(newUniverses);
+    } catch (error) {
+      console.error('Failed to update page:', error);
+      throw error;
     }
-
-    newPages = newPages.map(p => p.id === pageId ? { ...p, ...updates } : p);
-    const newUniverses = universes.map(u => u.id === universeId ? { ...u, pages: newPages } : u);
-    await saveUniverses(newUniverses);
   }, [universes, saveUniverses]);
 
   const deletePage = useCallback(async (universeId: string, pageId: string) => {
-    const newUniverses = universes.map(u => {
-      if (u.id === universeId) {
-        const pages = u.pages.filter(p => p.id !== pageId).map(p => ({
-          ...p,
-          connections: p.connections.filter(c => c !== pageId),
-          subsections: p.subsections.map(s => ({
-            ...s,
-            connections: s.connections.filter(c => c !== pageId)
-          }))
-        }));
-        return { ...u, pages };
-      }
-      return u;
-    });
-    await saveUniverses(newUniverses);
+    try {
+      // Delete from database
+      await db.deletePage(pageId);
+      
+      // Update local state
+      const newUniverses = universes.map(u => {
+        if (u.id === universeId) {
+          return {
+            ...u,
+            pages: u.pages.filter(p => p.id !== pageId)
+          };
+        }
+        return u;
+      });
+      await saveUniverses(newUniverses);
+    } catch (error) {
+      console.error('Failed to delete page:', error);
+      throw error;
+    }
   }, [universes, saveUniverses]);
 
   const createSubsection = useCallback(async (universeId: string, pageId: string, title: string, content: string) => {
@@ -339,86 +370,65 @@ export const UniverseOperationsProvider = ({ children }: { children: React.React
   }, [universes, saveUniverses]);
 
   const updateSubsection = useCallback(async (universeId: string, pageId: string, subsectionId: string, updates: Partial<Subsection>) => {
-    let uIndex = universes.findIndex(u => u.id === universeId);
-    if (uIndex === -1) return;
-    let oldUniverse = universes[uIndex];
-    let pIndex = oldUniverse.pages.findIndex(p => p.id === pageId);
-    if (pIndex === -1) return;
-    let sIndex = oldUniverse.pages[pIndex].subsections.findIndex(s => s.id === subsectionId);
-    if (sIndex === -1) return;
-    
-    let oldSub = oldUniverse.pages[pIndex].subsections[sIndex];
-    let newPages = oldUniverse.pages.map(p => ({ ...p }));
-
-    if (updates.connections) {
-      const added = updates.connections.filter(c => !oldSub.connections.includes(c));
-      const removed = oldSub.connections.filter(c => !updates.connections!.includes(c));
+    try {
+      // Update database
+      await db.updateSubsection(subsectionId, updates);
       
-      const updateBidir = (targetId: string, sourceId: string, isAdd: boolean) => {
-        newPages = newPages.map(p => {
-          let updatedP = false;
-          let conns = p.connections;
-          if (p.id === targetId) {
-            if (isAdd && !conns.includes(sourceId)) { conns = [...conns, sourceId]; updatedP = true; }
-            if (!isAdd && conns.includes(sourceId)) { conns = conns.filter(id => id !== sourceId); updatedP = true; }
-          }
-          
-          let subsModified = false;
-          let newSubs = p.subsections.map(s => {
-            if (s.id === targetId) {
-              let sConns = s.connections;
-              if (isAdd && !sConns.includes(sourceId)) { sConns = [...sConns, sourceId]; subsModified = true; }
-              if (!isAdd && sConns.includes(sourceId)) { sConns = sConns.filter(id => id !== sourceId); subsModified = true; }
-              return { ...s, connections: sConns };
-            }
-            return s;
-          });
-          
-          if (updatedP || subsModified) {
-            return { ...p, connections: updatedP ? conns : p.connections, subsections: subsModified ? newSubs : p.subsections };
-          }
-          return p;
-        });
-      };
-
-      added.forEach(c => updateBidir(c, subsectionId, true));
-      removed.forEach(c => updateBidir(c, subsectionId, false));
+      // Update local state
+      const newUniverses = universes.map(u => {
+        if (u.id === universeId) {
+          return {
+            ...u,
+            pages: u.pages.map(p => {
+              if (p.id === pageId) {
+                return {
+                  ...p,
+                  subsections: p.subsections.map(s => 
+                    s.id === subsectionId ? { ...s, ...updates } : s
+                  )
+                };
+              }
+              return p;
+            })
+          };
+        }
+        return u;
+      });
+      await saveUniverses(newUniverses);
+    } catch (error) {
+      console.error('Failed to update subsection:', error);
+      throw error;
     }
-
-    newPages = newPages.map(p => {
-      if (p.id === pageId) {
-        return {
-          ...p,
-          subsections: p.subsections.map(s => s.id === subsectionId ? { ...s, ...updates } : s)
-        };
-      }
-      return p;
-    });
-
-    const newUniverses = universes.map(u => u.id === universeId ? { ...u, pages: newPages } : u);
-    await saveUniverses(newUniverses);
   }, [universes, saveUniverses]);
 
   const deleteSubsection = useCallback(async (universeId: string, pageId: string, subsectionId: string) => {
-    const newUniverses = universes.map(u => {
-      if (u.id === universeId) {
-        return {
-          ...u,
-          pages: u.pages.map(p => {
-            return {
-              ...p,
-              connections: p.connections.filter(c => c !== subsectionId),
-              subsections: p.subsections.filter(s => s.id !== subsectionId || p.id !== pageId).map(s => ({
-                ...s,
-                connections: s.connections.filter(c => c !== subsectionId)
-              }))
-            };
-          })
-        };
-      }
-      return u;
-    });
-    await saveUniverses(newUniverses);
+    try {
+      // Delete from database
+      await db.deleteSubsection(subsectionId);
+      
+      // Update local state
+      const newUniverses = universes.map(u => {
+        if (u.id === universeId) {
+          return {
+            ...u,
+            pages: u.pages.map(p => {
+              if (p.id === pageId) {
+                return {
+                  ...p,
+                  subsections: p.subsections.filter(s => s.id !== subsectionId)
+                };
+              }
+              return p;
+            })
+          };
+        }
+        return u;
+      });
+      await saveUniverses(newUniverses);
+    } catch (error) {
+      console.error('Failed to delete subsection:', error);
+      throw error;
+    }
   }, [universes, saveUniverses]);
 
   const contextValue = {

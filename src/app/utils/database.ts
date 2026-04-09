@@ -126,11 +126,29 @@ export const getPages = async (universeId: string): Promise<Page[]> => {
   
   if (error) throw error;
   
-  // Get subsections for each page
+  // Get connections for this universe
+  const connections = await getConnections(universeId);
+  
+  // Get subsections for each page and add connections
   const pagesWithSubsections = await Promise.all(
     data.map(async (page) => {
       const subsections = await getSubsections(page.id);
-      return transformPage({ ...page, subsections });
+      const pageConnections = connections
+        .filter(c => c.sourceType === 'page' && c.sourceId === page.id)
+        .map(c => c.targetId);
+      
+      const subsectionsWithConnections = subsections.map(sub => {
+        const subConnections = connections
+          .filter(c => c.sourceType === 'subsection' && c.sourceId === sub.id)
+          .map(c => c.targetId);
+        return { ...sub, connections: subConnections };
+      });
+      
+      return transformPage({ 
+        ...page, 
+        subsections: subsectionsWithConnections,
+        connections: pageConnections 
+      });
     })
   );
   
@@ -146,13 +164,28 @@ export const createPage = async (page: Omit<Page, 'id'> & { universe_id: string 
       description: page.description,
       cover_image: page.coverImage,
       category: page.category,
-      position: page.position || {},
-      connections: page.connections || []
+      position: page.position || {}
     })
     .select()
     .single();
   
   if (error) throw error;
+  
+  // Create connections if provided
+  if (page.connections && page.connections.length > 0) {
+    await Promise.all(
+      page.connections.map(targetId => 
+        createConnection({
+          universe_id: page.universe_id,
+          sourceType: 'page',
+          sourceId: data.id,
+          targetType: 'page',
+          targetId
+        })
+      )
+    );
+  }
+  
   return transformPage(data);
 };
 
@@ -164,20 +197,60 @@ export const updatePage = async (id: string, updates: Partial<Page>): Promise<Pa
       description: updates.description,
       cover_image: updates.coverImage,
       category: updates.category,
-      position: updates.position || {},
-      connections: updates.connections
+      position: updates.position || {}
     })
     .eq('id', id)
     .select()
     .single();
   
   if (error) throw error;
+  
+  // Handle connections separately if provided
+  if (updates.connections !== undefined) {
+    // First, get the universe_id for this page
+    const { data: pageData } = await supabase
+      .from('pages')
+      .select('universe_id')
+      .eq('id', id)
+      .single();
+    
+    if (pageData) {
+      // Delete existing connections from this page
+      await supabase
+        .from('connections')
+        .delete()
+        .eq('source_type', 'page')
+        .eq('source_id', id);
+      
+      // Create new connections
+      if (updates.connections.length > 0) {
+        await Promise.all(
+          updates.connections.map(targetId => 
+            createConnection({
+              universe_id: pageData.universe_id,
+              sourceType: 'page',
+              sourceId: id,
+              targetType: 'page',
+              targetId
+            })
+          )
+        );
+      }
+    }
+  }
+  
   return transformPage(data);
 };
 
 export const deletePage = async (id: string): Promise<void> => {
   try {
-    // First, delete all subsections for this page
+    // First, delete all connections from this page
+    await supabase
+      .from('connections')
+      .delete()
+      .or(`(source_type.eq.page AND source_id.eq.${id}) OR (target_type.eq.page AND target_id.eq.${id})`);
+    
+    // Then delete all subsections for this page
     const { error: subsectionsError } = await supabase
       .from('subsections')
       .delete()
@@ -185,7 +258,7 @@ export const deletePage = async (id: string): Promise<void> => {
     
     if (subsectionsError) throw subsectionsError;
     
-    // Then delete the page
+    // Finally delete the page
     const { error } = await supabase
       .from('pages')
       .delete()
@@ -217,13 +290,37 @@ export const createSubsection = async (subsection: Omit<Subsection, 'id'> & { pa
       page_id: subsection.page_id,
       title: subsection.title,
       content: subsection.content,
-      position: subsection.position || {},
-      connections: subsection.connections || []
+      position: subsection.position || {}
     })
     .select()
     .single();
   
   if (error) throw error;
+  
+  // Create connections if provided
+  if (subsection.connections && subsection.connections.length > 0) {
+    // First, get universe_id for this subsection's page
+    const { data: pageData } = await supabase
+      .from('pages')
+      .select('universe_id')
+      .eq('id', subsection.page_id)
+      .single();
+    
+    if (pageData) {
+      await Promise.all(
+        subsection.connections.map(targetId => 
+          createConnection({
+            universe_id: pageData.universe_id,
+            sourceType: 'subsection',
+            sourceId: data.id,
+            targetType: 'subsection',
+            targetId
+          })
+        )
+      );
+    }
+  }
+  
   return transformSubsection(data);
 };
 
@@ -233,24 +330,77 @@ export const updateSubsection = async (id: string, updates: Partial<Subsection>)
     .update({
       title: updates.title,
       content: updates.content,
-      position: updates.position || {},
-      connections: updates.connections
+      position: updates.position || {}
     })
     .eq('id', id)
     .select()
     .single();
   
   if (error) throw error;
+  
+  // Handle connections separately if provided
+  if (updates.connections !== undefined) {
+    // First, get universe_id for this subsection's page
+    const { data: subsectionData } = await supabase
+      .from('subsections')
+      .select('page_id')
+      .eq('id', id)
+      .single();
+    
+    if (subsectionData) {
+      const { data: pageData } = await supabase
+        .from('pages')
+        .select('universe_id')
+        .eq('id', subsectionData.page_id)
+        .single();
+      
+      if (pageData) {
+        // Delete existing connections from this subsection
+        await supabase
+          .from('connections')
+          .delete()
+          .eq('source_type', 'subsection')
+          .eq('source_id', id);
+        
+        // Create new connections
+        if (updates.connections.length > 0) {
+          await Promise.all(
+            updates.connections.map(targetId => 
+              createConnection({
+                universe_id: pageData.universe_id,
+                sourceType: 'subsection',
+                sourceId: id,
+                targetType: 'subsection',
+                targetId
+              })
+            )
+          );
+        }
+      }
+    }
+  }
+  
   return transformSubsection(data);
 };
 
 export const deleteSubsection = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from('subsections')
-    .delete()
-    .eq('id', id);
-  
-  if (error) throw error;
+  try {
+    // First, delete all connections from this subsection
+    await supabase
+      .from('connections')
+      .delete()
+      .or(`(source_type.eq.subsection AND source_id.eq.${id}) OR (target_type.eq.subsection AND target_id.eq.${id})`);
+    
+    // Then delete the subsection
+    const { error } = await supabase
+      .from('subsections')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Connection operations
@@ -308,7 +458,7 @@ const transformPage = (data: any): Page => ({
   description: data.description || '',
   coverImage: data.cover_image,
   subsections: data.subsections || [],
-  connections: data.connections || [],
+  connections: data.connections || [], // Will be provided by getPages
   category: data.category,
   position: data.position
 });
@@ -317,7 +467,7 @@ const transformSubsection = (data: any): Subsection => ({
   id: data.id,
   title: data.title,
   content: data.content || '',
-  connections: data.connections || [],
+  connections: data.connections || [], // Will be provided by getPages
   position: data.position
 });
 
